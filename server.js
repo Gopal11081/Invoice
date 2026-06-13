@@ -28,11 +28,23 @@ app.use(session({
 }));
 
 // ===== STATIC FILES (publicly accessible) =====
-app.use('/login.html', express.static(path.join(__dirname, 'public', 'login.html')));
-app.use('/login.css', express.static(path.join(__dirname, 'public', 'login.css')));
-app.use('/share.html', express.static(path.join(__dirname, 'public', 'share.html')));
-app.use('/share.css', express.static(path.join(__dirname, 'public', 'share.css')));
-app.use('/share.js', express.static(path.join(__dirname, 'public', 'share.js')));
+const publicDir = path.join(process.cwd(), 'public');
+
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(publicDir, 'login.html'));
+});
+app.get('/login.css', (req, res) => {
+  res.sendFile(path.join(publicDir, 'login.css'));
+});
+app.get('/share.html', (req, res) => {
+  res.sendFile(path.join(publicDir, 'share.html'));
+});
+app.get('/share.css', (req, res) => {
+  res.sendFile(path.join(publicDir, 'share.css'));
+});
+app.get('/share.js', (req, res) => {
+  res.sendFile(path.join(publicDir, 'share.js'));
+});
 
 // ===== AUTH ROUTES (public — no auth required) =====
 
@@ -111,7 +123,7 @@ function requireAuth(req, res, next) {
 app.use(requireAuth);
 
 // Serve static files (only for authenticated users)
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicDir));
 
 // ===== CHANGE PASSWORD =====
 app.put('/api/auth/password', async (req, res) => {
