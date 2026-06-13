@@ -112,8 +112,8 @@ app.get('/api/auth/check', (req, res) => {
 });
 
 // GET /api/public/debug-db — debug endpoint to verify Firestore connection status
-app.get('/api/public/debug-db', (req, res) => {
-  res.json(db.getInitStatus());
+app.get('/api/public/debug-db', async (req, res) => {
+  res.json(await db.getInitStatus());
 });
 
 // ===== AUTH MIDDLEWARE — Protect everything below =====

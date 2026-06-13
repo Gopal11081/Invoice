@@ -694,8 +694,17 @@ async function upsertCustomerFromInvoice(data) {
   }
 }
 
-function getInitStatus() {
-  return initStatus;
+async function getInitStatus() {
+  const status = { ...initStatus };
+  try {
+    const testDoc = await db.collection('business_config').doc('default').get();
+    status.firestoreConnection = 'connected';
+    status.firestoreData = testDoc.exists ? 'found' : 'not_found';
+  } catch (err) {
+    status.firestoreConnection = 'failed';
+    status.firestoreError = err.message;
+  }
+  return status;
 }
 
 module.exports = {
