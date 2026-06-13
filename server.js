@@ -111,6 +111,11 @@ app.get('/api/auth/check', (req, res) => {
   res.json({ authenticated: false });
 });
 
+// GET /api/public/debug-db — debug endpoint to verify Firestore connection status
+app.get('/api/public/debug-db', (req, res) => {
+  res.json(db.getInitStatus());
+});
+
 // ===== AUTH MIDDLEWARE — Protect everything below =====
 function requireAuth(req, res, next) {
   // Allow public API endpoints

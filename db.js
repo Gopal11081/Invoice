@@ -5,28 +5,65 @@
 
 const admin = require('firebase-admin');
 const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
+
+let initStatus = {
+  loadedFrom: 'none',
+  projectId: '',
+  success: false,
+  error: null
+};
 
 // Initialize Firebase Admin
 if (admin.apps.length === 0) {
   const projectId = process.env.GCP_PROJECT || process.env.FIREBASE_PROJECT_ID || 'invoice-36828';
-  
+  initStatus.projectId = projectId;
+
+  let serviceAccount = null;
+
+  // 1. Try environment variable
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      initStatus.loadedFrom = 'env';
+    } catch (err) {
+      console.error("❌ Error parsing FIREBASE_SERVICE_ACCOUNT environment variable:", err.message);
+      initStatus.error = `Env parse error: ${err.message}`;
+    }
+  }
+
+  // 2. Try local file fallback (for local development)
+  if (!serviceAccount) {
+    const localKeyPath = path.join(process.cwd(), 'service-account.json');
+    if (fs.existsSync(localKeyPath)) {
+      try {
+        serviceAccount = JSON.parse(fs.readFileSync(localKeyPath, 'utf8'));
+        initStatus.loadedFrom = 'local-file';
+      } catch (err) {
+        console.error("❌ Error reading local service-account.json file:", err.message);
+        initStatus.error = `Local file parse error: ${err.message}`;
+      }
+    }
+  }
+
+  // 3. Initialize SDK
+  try {
+    if (serviceAccount) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId: projectId
       });
-      console.log(`\n  🔥 Firebase Admin initialized via Service Account for Project: ${projectId}\n`);
-    } catch (err) {
-      console.error("❌ Error parsing FIREBASE_SERVICE_ACCOUNT environment variable:", err.message);
+      initStatus.success = true;
+      console.log(`\n  🔥 Firebase Admin initialized via Service Account for Project: ${projectId} (source: ${initStatus.loadedFrom})\n`);
+    } else {
       admin.initializeApp({ projectId });
+      initStatus.success = true;
+      console.log(`\n  🔥 Firebase Admin initialized with Project ID: ${projectId} (unauthenticated/ADC)\n`);
     }
-  } else {
-    admin.initializeApp({
-      projectId: projectId
-    });
-    console.log(`\n  🔥 Firebase Admin initialized with Project ID: ${projectId}`);
+  } catch (err) {
+    console.error("❌ Error initializing Firebase Admin SDK:", err.message);
+    initStatus.error = `Init error: ${err.message}`;
   }
 
   if (process.env.FIRESTORE_EMULATOR_HOST) {
@@ -657,6 +694,10 @@ async function upsertCustomerFromInvoice(data) {
   }
 }
 
+function getInitStatus() {
+  return initStatus;
+}
+
 module.exports = {
   getDb,
   getBusinessConfig,
@@ -683,4 +724,5 @@ module.exports = {
   updateCustomer,
   deleteCustomer,
   upsertCustomerFromInvoice,
+  getInitStatus,
 };
