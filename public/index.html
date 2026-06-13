@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GST Invoice Generator — Professional Billing Made Easy</title>
+  <meta name="description" content="Generate professional GST-compliant invoices with automatic CGST, SGST, and IGST calculations. Free, fast, and beautiful." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+  <!-- ===== ANIMATED BACKGROUND ===== -->
+  <div class="bg-gradient"></div>
+  <div class="bg-grid"></div>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="6" width="32" height="28" rx="4" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M4 14H36" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M12 6V14" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M28 6V14" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M12 22H20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M12 28H28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="30" cy="22" r="3" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="sidebar-logo-title">InvoiceGST</span>
+        <span class="sidebar-logo-sub">Professional Billing</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#/dashboard" class="sidebar-link" data-page="dashboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#/invoice" class="sidebar-link" data-page="invoice">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>New Invoice</span>
+      </a>
+      <a href="#/history" class="sidebar-link" data-page="history">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        <span>History</span>
+      </a>
+      <a href="#/products" class="sidebar-link" data-page="products">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27,6.96 12,12.01 20.73,6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>Products</span>
+      </a>
+      <a href="#/customers" class="sidebar-link" data-page="customers">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <span>Customers</span>
+      </a>
+      <a href="#/settings" class="sidebar-link" data-page="settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="sidebarUserAvatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebarUserName">Admin</div>
+          <div class="sidebar-user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="sidebar-logout" id="btnLogout" title="Sign Out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== MOBILE HEADER ===== -->
+  <header class="mobile-header" id="mobileHeader">
+    <button class="mobile-menu-btn" id="btnMobileMenu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="mobile-title">InvoiceGST</span>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ===== MAIN CONTENT WRAPPER ===== -->
+  <div class="app-content" id="appContent">
+
+    <!-- ========== PAGE: DASHBOARD ========== -->
+    <section class="page" id="pageDashboard">
+      <div class="page-header">
+        <h1 class="page-title">📊 Sales Dashboard</h1>
+      </div>
+      <div class="page-body dash-body">
+        <div class="dash-kpi-grid" id="dashKpiGrid">
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="kpiTotalSalesVal">₹0</div>
+              <div class="dash-kpi-label">Total Revenue</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="kpiInvoiceCountVal">0</div>
+              <div class="dash-kpi-label">Total Invoices</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/><polyline points="17,6 23,6 23,12"/></svg></div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="kpiAvgInvoiceVal">₹0</div>
+              <div class="dash-kpi-label">Avg. Invoice</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="kpiTotalTaxVal">₹0</div>
+              <div class="dash-kpi-label">GST Collected</div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-row">
+          <div class="dash-card dash-chart-card">
+            <h3>Monthly Sales (Last 12 Months)</h3>
+            <div class="dash-chart-container"><canvas id="monthlySalesChart"></canvas></div>
+          </div>
+          <div class="dash-card dash-month-card">
+            <h3>This Month</h3>
+            <div class="dash-month-stats">
+              <div class="dash-month-stat"><div class="dash-month-val" id="dashThisMonthSales">₹0</div><div class="dash-month-label">Sales</div></div>
+              <div class="dash-month-stat"><div class="dash-month-val" id="dashThisMonthCount">0</div><div class="dash-month-label">Invoices</div></div>
+            </div>
+            <div class="dash-month-comparison" id="dashMonthComparison"></div>
+            <h3 style="margin-top:1.25rem;">GST Breakdown</h3>
+            <div class="dash-tax-grid">
+              <div class="dash-tax-item"><span class="dash-tax-label">CGST</span><span class="dash-tax-val" id="dashTotalCgst">₹0</span></div>
+              <div class="dash-tax-item"><span class="dash-tax-label">SGST</span><span class="dash-tax-val" id="dashTotalSgst">₹0</span></div>
+              <div class="dash-tax-item"><span class="dash-tax-label">IGST</span><span class="dash-tax-val" id="dashTotalIgst">₹0</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-row">
+          <div class="dash-card"><h3>🏆 Top Products by Revenue</h3><div id="dashTopProducts" class="dash-table-container"></div></div>
+          <div class="dash-card"><h3>👥 Top Customers</h3><div id="dashTopCustomers" class="dash-table-container"></div></div>
+        </div>
+        <div class="dash-card"><h3>📄 Recent Invoices</h3><div id="dashRecentInvoices" class="dash-table-container"></div></div>
+      </div>
+    </section>
+
+    <!-- ========== PAGE: INVOICE ========== -->
+    <section class="page" id="pageInvoice">
+      <div class="page-header">
+        <h1 class="page-title">✏️ Create Invoice</h1>
+        <div class="page-actions">
+          <button class="btn btn-ghost" id="btnNewInvoice" title="Reset Form">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New
+          </button>
+          <button class="btn btn-primary" id="btnPreview" title="Preview Invoice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Preview
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="main-grid">
+          <!-- LEFT: FORM -->
+          <div class="form-column">
+            <!-- INVOICE META -->
+            <section class="card card-glow" id="sectionInvoiceMeta">
+              <div class="card-header">
+                <div class="card-icon gradient-blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <h2>Invoice Details</h2>
+              </div>
+              <div class="card-body">
+                <div class="form-grid cols-3">
+                  <div class="form-group"><label for="invoiceNumber">Invoice Number</label><input type="text" id="invoiceNumber" placeholder="INV-0001" /></div>
+                  <div class="form-group"><label for="invoiceDate">Invoice Date</label><input type="date" id="invoiceDate" /></div>
+                  <div class="form-group"><label for="dueDate">Due Date</label><input type="date" id="dueDate" /></div>
+                </div>
+                <div class="form-grid cols-2">
+                  <div class="form-group"><label for="placeOfSupply">Place of Supply</label><select id="placeOfSupply"><option value="">Select State</option></select></div>
+                  <div class="form-group"><label for="supplyType">Supply Type</label>
+                    <div class="toggle-group">
+                      <button class="toggle-btn active" data-value="intra" id="toggleIntra">Intra-State (CGST+SGST)</button>
+                      <button class="toggle-btn" data-value="inter" id="toggleInter">Inter-State (IGST)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- SELLER (READ-ONLY) -->
+            <section class="card card-glow card-readonly" id="sectionSeller">
+              <div class="card-header">
+                <div class="card-icon gradient-purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+                <h2>Your Business</h2>
+                <span class="badge badge-seller">Auto-filled</span>
+                <a href="#/settings" class="btn btn-sm btn-accent">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit
+                </a>
+              </div>
+              <div class="card-body seller-display" id="sellerDisplay">
+                <div class="seller-info-grid">
+                  <div class="seller-main">
+                    <div class="seller-name" id="dispSellerName">Loading...</div>
+                    <div class="seller-detail" id="dispSellerAddress"></div>
+                    <div class="seller-detail" id="dispSellerContact"></div>
+                  </div>
+                  <div class="seller-gstin-block">
+                    <div class="seller-gstin-label">GSTIN</div>
+                    <div class="seller-gstin-value mono" id="dispSellerGstin">—</div>
+                  </div>
+                </div>
+                <input type="hidden" id="sellerName" /><input type="hidden" id="sellerGstin" /><input type="hidden" id="sellerAddress" /><input type="hidden" id="sellerState" /><input type="hidden" id="sellerPhone" /><input type="hidden" id="sellerEmail" /><input type="hidden" id="bankName" /><input type="hidden" id="accountNumber" /><input type="hidden" id="ifscCode" /><input type="hidden" id="bankBranch" /><input type="hidden" id="notes" />
+              </div>
+            </section>
+
+            <!-- BUYER -->
+            <section class="card card-glow" id="sectionBuyer">
+              <div class="card-header">
+                <div class="card-icon gradient-green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <h2>Bill To</h2><span class="badge badge-buyer">Customer</span>
+              </div>
+              <div class="card-body">
+                <div class="form-grid cols-2">
+                  <div class="form-group">
+                    <label for="buyerName">Customer Name *</label>
+                    <input type="text" id="buyerName" placeholder="Customer Name / Company" required list="customerList" />
+                    <datalist id="customerList"></datalist>
+                  </div>
+                  <div class="form-group"><label for="buyerGstin">GSTIN</label><input type="text" id="buyerGstin" placeholder="22BBBBB0000B1Z5" maxlength="15" class="mono" /></div>
+                </div>
+                <div class="form-group"><label for="buyerAddress">Address</label><textarea id="buyerAddress" rows="2" placeholder="456 Market Road, City, State - 500001"></textarea></div>
+                <div class="form-grid cols-3">
+                  <div class="form-group"><label for="buyerState">State</label><select id="buyerState"><option value="">Select State</option></select></div>
+                  <div class="form-group"><label for="buyerPhone">Phone</label><input type="tel" id="buyerPhone" placeholder="+91 91234 56789" /></div>
+                  <div class="form-group"><label for="buyerEmail">Email</label><input type="email" id="buyerEmail" placeholder="customer@email.com" /></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- LINE ITEMS -->
+            <section class="card card-glow" id="sectionItems">
+              <div class="card-header">
+                <div class="card-icon gradient-orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+                <h2>Items / Services</h2>
+                <button class="btn btn-sm btn-accent" id="btnAddItem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Item</button>
+              </div>
+              <div class="card-body">
+                <div class="items-table-wrapper">
+                  <table class="items-table" id="itemsTable"><thead><tr><th class="col-sno">#</th><th class="col-desc">Description</th><th class="col-hsn">HSN/SAC</th><th class="col-qty">Qty</th><th class="col-unit">Unit</th><th class="col-rate">Rate (₹)</th><th class="col-discount">Disc %</th><th class="col-gst">GST %</th><th class="col-amount">Amount (₹)</th><th class="col-action"></th></tr></thead><tbody id="itemsBody"></tbody></table>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- RIGHT: SUMMARY -->
+          <div class="summary-column">
+            <div class="sticky-summary">
+              <section class="card card-glow summary-card" id="sectionSummary">
+                <div class="card-header"><div class="card-icon gradient-pink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><h2>Invoice Summary</h2></div>
+                <div class="card-body">
+                  <div class="summary-rows">
+                    <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-value" id="summarySubtotal">₹0.00</span></div>
+                    <div class="summary-row"><span class="summary-label">Discount</span><span class="summary-value discount" id="summaryDiscount">−₹0.00</span></div>
+                    <div class="summary-row"><span class="summary-label">Taxable Amount</span><span class="summary-value" id="summaryTaxable">₹0.00</span></div>
+                    <div class="summary-divider"></div>
+                    <div id="taxBreakdownIntra"><div class="summary-row tax-row"><span class="summary-label">CGST</span><span class="summary-value" id="summaryCgst">₹0.00</span></div><div class="summary-row tax-row"><span class="summary-label">SGST</span><span class="summary-value" id="summarySgst">₹0.00</span></div></div>
+                    <div id="taxBreakdownInter" style="display:none;"><div class="summary-row tax-row"><span class="summary-label">IGST</span><span class="summary-value" id="summaryIgst">₹0.00</span></div></div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-row total-row"><span class="summary-label">Total Amount</span><span class="summary-value" id="summaryTotal">₹0.00</span></div>
+                    <div class="summary-row total-words"><span id="summaryWords" class="amount-words">Zero Rupees Only</span></div>
+                  </div>
+                  <div class="gst-breakdown" id="gstBreakdown"><h3>GST Breakdown</h3><table class="gst-table"><thead><tr><th>Rate</th><th>Taxable</th><th id="gstColHeader1">CGST</th><th id="gstColHeader2">SGST</th><th>Total Tax</th></tr></thead><tbody id="gstBreakdownBody"></tbody></table></div>
+                </div>
+              </section>
+              <section class="card card-glow codes-card" id="sectionCodes">
+                <div class="card-header"><div class="card-icon gradient-teal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg></div><h2>Barcode & QR</h2><span class="badge badge-codes">Live</span></div>
+                <div class="card-body codes-body">
+                  <div class="code-preview"><div class="code-label">Barcode <span class="code-sublabel">(Invoice #)</span></div><div class="barcode-wrapper" id="barcodePreviewWrapper"><svg id="barcodePreview"></svg></div></div>
+                  <div class="code-divider"></div>
+                  <div class="code-preview"><div class="code-label">QR Code <span class="code-sublabel">(Invoice Details)</span></div><div class="qr-wrapper" id="qrPreviewWrapper"><div id="qrPreview"></div></div></div>
+                </div>
+              </section>
+              <div class="action-buttons">
+                <button class="btn btn-large btn-primary" id="btnSaveInvoice"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg> Save Invoice</button>
+                <button class="btn btn-large btn-gradient" id="btnGeneratePdf"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF</button>
+                <button class="btn btn-large btn-outline" id="btnPrint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print Invoice</button>
+                <button class="btn btn-large btn-accent" id="btnShareInvoice"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Invoice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PAGE: HISTORY ========== -->
+    <section class="page" id="pageHistory">
+      <div class="page-header"><h1 class="page-title">🕐 Invoice History</h1></div>
+      <div class="page-body"><div class="history-list" id="historyList"><p class="page-empty-state">Loading invoices...</p></div></div>
+    </section>
+
+    <!-- ========== PAGE: PRODUCTS ========== -->
+    <section class="page" id="pageProducts">
+      <div class="page-header">
+        <h1 class="page-title">📦 Product Catalog</h1>
+        <div class="page-actions">
+          <button class="btn btn-accent" id="btnAddProduct"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Product</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="product-form" id="productForm" style="display:none;">
+          <h3 class="settings-section-title" id="productFormTitle">Add New Product</h3>
+          <div class="form-grid cols-2">
+            <div class="form-group" style="grid-column:1/-1;"><label for="prodDescription">Description *</label><input type="text" id="prodDescription" placeholder="Product or service name" /></div>
+            <div class="form-group"><label for="prodHsn">HSN / SAC Code</label><input type="text" id="prodHsn" placeholder="998314" class="mono" /></div>
+            <div class="form-group"><label for="prodUnit">Unit</label><select id="prodUnit"></select></div>
+            <div class="form-group"><label for="prodRate">Rate (₹)</label><input type="number" id="prodRate" placeholder="0.00" min="0" step="0.01" /></div>
+            <div class="form-group"><label for="prodGst">GST Rate (%)</label><select id="prodGst"></select></div>
+          </div>
+          <div class="product-form-actions">
+            <button class="btn btn-primary" id="btnSaveProduct">Save Product</button>
+            <button class="btn btn-ghost" id="btnCancelProduct">Cancel</button>
+          </div>
+        </div>
+        <div class="products-list" id="productsList"><p class="page-empty-state">Loading products...</p></div>
+      </div>
+    </section>
+    <!-- ========== PAGE: CUSTOMERS ========== -->
+    <section class="page" id="pageCustomers">
+      <div class="page-header">
+        <h1 class="page-title">👥 Customer Directory</h1>
+        <div class="page-actions">
+          <button class="btn btn-accent" id="btnAddCustomer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Customer</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="product-form" id="customerForm" style="display:none;">
+          <h3 class="settings-section-title" id="customerFormTitle">Add New Customer</h3>
+          <div class="form-grid cols-2">
+            <div class="form-group" style="grid-column:1/-1;"><label for="custName">Customer / Company Name *</label><input type="text" id="custName" placeholder="Acme Corp / John Doe" /></div>
+            <div class="form-group"><label for="custGstin">GSTIN</label><input type="text" id="custGstin" placeholder="22AAAAA0000A1Z5" class="mono" maxlength="15" /></div>
+            <div class="form-group"><label for="custState">State</label><select id="custState"><option value="">Select State</option></select></div>
+            <div class="form-group" style="grid-column:1/-1;"><label for="custAddress">Address</label><textarea id="custAddress" rows="2" placeholder="Street Address, City"></textarea></div>
+            <div class="form-group"><label for="custPhone">Phone</label><input type="tel" id="custPhone" placeholder="+91 98765 43210" /></div>
+            <div class="form-group"><label for="custEmail">Email</label><input type="email" id="custEmail" placeholder="billing@customer.com" /></div>
+          </div>
+          <div class="product-form-actions">
+            <button class="btn btn-primary" id="btnSaveCustomer">Save Customer</button>
+            <button class="btn btn-ghost" id="btnCancelCustomer">Cancel</button>
+          </div>
+        </div>
+        <div class="products-list" id="customersList"><p class="page-empty-state">Loading customers...</p></div>
+      </div>
+    </section>
+
+    <!-- ========== PAGE: SETTINGS ========== -->
+    <section class="page" id="pageSettings">
+      <div class="page-header">
+        <h1 class="page-title">⚙️ Business Settings</h1>
+        <div class="page-actions"><button class="btn btn-primary" id="btnSaveSettings">Save Changes</button></div>
+      </div>
+      <div class="page-body">
+        <div class="settings-form">
+          <h3 class="settings-section-title">Company Information</h3>
+          <div class="form-grid cols-2">
+            <div class="form-group"><label for="settBizName">Business Name *</label><input type="text" id="settBizName" placeholder="Your Company Pvt. Ltd." /></div>
+            <div class="form-group"><label for="settBizGstin">GSTIN *</label><input type="text" id="settBizGstin" placeholder="22AAAAA0000A1Z5" maxlength="15" class="mono" /></div>
+          </div>
+          <div class="form-group"><label for="settBizAddress">Address</label><textarea id="settBizAddress" rows="2" placeholder="123 Business Park, City, State - 400001"></textarea></div>
+          <div class="form-grid cols-3">
+            <div class="form-group"><label for="settBizState">State</label><select id="settBizState"><option value="">Select State</option></select></div>
+            <div class="form-group"><label for="settBizPhone">Phone</label><input type="tel" id="settBizPhone" placeholder="+91 98765 43210" /></div>
+            <div class="form-group"><label for="settBizEmail">Email</label><input type="email" id="settBizEmail" placeholder="billing@company.com" /></div>
+          </div>
+          <h3 class="settings-section-title">Bank Details</h3>
+          <div class="form-grid cols-2">
+            <div class="form-group"><label for="settBankName">Bank Name</label><input type="text" id="settBankName" placeholder="State Bank of India" /></div>
+            <div class="form-group"><label for="settAccNumber">Account Number</label><input type="text" id="settAccNumber" placeholder="1234567890" class="mono" /></div>
+            <div class="form-group"><label for="settIfsc">IFSC Code</label><input type="text" id="settIfsc" placeholder="SBIN0000123" class="mono" /></div>
+            <div class="form-group"><label for="settBranch">Branch</label><input type="text" id="settBranch" placeholder="Main Branch, City" /></div>
+          </div>
+          <h3 class="settings-section-title">Default Terms & Conditions</h3>
+          <div class="form-group"><textarea id="settTerms" rows="4" placeholder="1. Payment is due within 30 days&#10;2. Goods once sold will not be taken back"></textarea></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== INVOICE PREVIEW MODAL (stays as modal) ===== -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Invoice Preview</h2>
+        <div class="modal-actions">
+          <button class="btn btn-sm btn-primary" id="btnModalPdf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button>
+          <button class="btn btn-sm btn-ghost" id="btnModalPrint"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>
+          <button class="btn btn-sm btn-accent" id="btnModalShare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</button>
+          <button class="btn btn-sm btn-ghost" id="btnCloseModal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      </div>
+      <div class="modal-body" id="invoicePreviewContainer"><div id="invoicePreview"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== SHARE MODAL ===== -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-content modal-small">
+      <div class="modal-header">
+        <h2>Share Invoice</h2>
+        <div class="modal-actions">
+          <button class="btn btn-sm btn-ghost" id="btnCloseShareModal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      </div>
+      <div class="modal-body share-modal-body">
+        <p class="share-modal-desc">Share this invoice with your customer. Anyone with this link can view the invoice online without logging in.</p>
+        <div class="share-url-container">
+          <input type="text" id="shareUrlInput" readonly class="mono" />
+          <button class="btn btn-primary" id="btnCopyShareUrl">Copy</button>
+        </div>
+        <div class="share-divider"><span>OR SHARE VIA</span></div>
+        <div class="share-options-grid">
+          <a href="#" target="_blank" class="share-option-btn whatsapp" id="shareWhatsappBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            <span>WhatsApp</span>
+          </a>
+          <a href="#" target="_blank" class="share-option-btn email" id="shareEmailBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>Email</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
