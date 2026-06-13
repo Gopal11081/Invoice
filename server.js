@@ -30,13 +30,13 @@ app.use(session({
 // ===== STATIC FILES (publicly accessible) =====
 const publicDir = path.join(process.cwd(), 'public');
 
-app.get('/login.html', (req, res) => {
+app.get(['/login', '/login.html'], (req, res) => {
   res.sendFile(path.join(publicDir, 'login.html'));
 });
 app.get('/login.css', (req, res) => {
   res.sendFile(path.join(publicDir, 'login.css'));
 });
-app.get('/share.html', (req, res) => {
+app.get(['/share', '/share.html'], (req, res) => {
   res.sendFile(path.join(publicDir, 'share.html'));
 });
 app.get('/share.css', (req, res) => {
@@ -116,7 +116,7 @@ function requireAuth(req, res, next) {
   }
 
   // For page requests, redirect to login
-  return res.redirect('/login.html');
+  return res.redirect('/login');
 }
 
 // Protect all remaining routes

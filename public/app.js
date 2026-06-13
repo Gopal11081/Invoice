@@ -44,7 +44,7 @@ async function api(url, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
   if (res.status === 401) {
-    window.location.href = '/login.html';
+    window.location.href = '/login';
     throw new Error('Session expired');
   }
   if (!res.ok) {
@@ -89,7 +89,7 @@ async function logout() {
   try {
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch (e) {}
-  window.location.href = '/login.html';
+  window.location.href = '/login';
 }
 
 // ===== ROUTER =====
