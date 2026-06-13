@@ -30,20 +30,32 @@ app.use(session({
 // ===== STATIC FILES (publicly accessible) =====
 const publicDir = path.join(process.cwd(), 'public');
 
+function sendPublicFile(res, fileName) {
+  const filePath = path.join(publicDir, fileName);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error(`Error sending file ${filePath}:`, err);
+      if (!res.headersSent) {
+        res.status(500).send(`Error loading ${fileName}: ${err.message}. process.cwd()=${process.cwd()}, __dirname=${__dirname}`);
+      }
+    }
+  });
+}
+
 app.get(['/login', '/login.html'], (req, res) => {
-  res.sendFile(path.join(publicDir, 'login.html'));
+  sendPublicFile(res, 'login.html');
 });
 app.get('/login.css', (req, res) => {
-  res.sendFile(path.join(publicDir, 'login.css'));
+  sendPublicFile(res, 'login.css');
 });
 app.get(['/share', '/share.html'], (req, res) => {
-  res.sendFile(path.join(publicDir, 'share.html'));
+  sendPublicFile(res, 'share.html');
 });
 app.get('/share.css', (req, res) => {
-  res.sendFile(path.join(publicDir, 'share.css'));
+  sendPublicFile(res, 'share.css');
 });
 app.get('/share.js', (req, res) => {
-  res.sendFile(path.join(publicDir, 'share.js'));
+  sendPublicFile(res, 'share.js');
 });
 
 // ===== AUTH ROUTES (public — no auth required) =====
