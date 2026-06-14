@@ -5,25 +5,25 @@
 
 // ===== INDIAN STATES LIST =====
 const INDIAN_STATES = [
-  { code: '01', name: 'Jammu & Kashmir' },{ code: '02', name: 'Himachal Pradesh' },{ code: '03', name: 'Punjab' },
-  { code: '04', name: 'Chandigarh' },{ code: '05', name: 'Uttarakhand' },{ code: '06', name: 'Haryana' },
-  { code: '07', name: 'Delhi' },{ code: '08', name: 'Rajasthan' },{ code: '09', name: 'Uttar Pradesh' },
-  { code: '10', name: 'Bihar' },{ code: '11', name: 'Sikkim' },{ code: '12', name: 'Arunachal Pradesh' },
-  { code: '13', name: 'Nagaland' },{ code: '14', name: 'Manipur' },{ code: '15', name: 'Mizoram' },
-  { code: '16', name: 'Tripura' },{ code: '17', name: 'Meghalaya' },{ code: '18', name: 'Assam' },
-  { code: '19', name: 'West Bengal' },{ code: '20', name: 'Jharkhand' },{ code: '21', name: 'Odisha' },
-  { code: '22', name: 'Chhattisgarh' },{ code: '23', name: 'Madhya Pradesh' },{ code: '24', name: 'Gujarat' },
-  { code: '25', name: 'Daman & Diu' },{ code: '26', name: 'Dadra & Nagar Haveli' },{ code: '27', name: 'Maharashtra' },
-  { code: '28', name: 'Andhra Pradesh (Old)' },{ code: '29', name: 'Karnataka' },{ code: '30', name: 'Goa' },
-  { code: '31', name: 'Lakshadweep' },{ code: '32', name: 'Kerala' },{ code: '33', name: 'Tamil Nadu' },
-  { code: '34', name: 'Puducherry' },{ code: '35', name: 'Andaman & Nicobar Islands' },
-  { code: '36', name: 'Telangana' },{ code: '37', name: 'Andhra Pradesh' },{ code: '38', name: 'Ladakh' },
+  { code: '01', name: 'Jammu & Kashmir' }, { code: '02', name: 'Himachal Pradesh' }, { code: '03', name: 'Punjab' },
+  { code: '04', name: 'Chandigarh' }, { code: '05', name: 'Uttarakhand' }, { code: '06', name: 'Haryana' },
+  { code: '07', name: 'Delhi' }, { code: '08', name: 'Rajasthan' }, { code: '09', name: 'Uttar Pradesh' },
+  { code: '10', name: 'Bihar' }, { code: '11', name: 'Sikkim' }, { code: '12', name: 'Arunachal Pradesh' },
+  { code: '13', name: 'Nagaland' }, { code: '14', name: 'Manipur' }, { code: '15', name: 'Mizoram' },
+  { code: '16', name: 'Tripura' }, { code: '17', name: 'Meghalaya' }, { code: '18', name: 'Assam' },
+  { code: '19', name: 'West Bengal' }, { code: '20', name: 'Jharkhand' }, { code: '21', name: 'Odisha' },
+  { code: '22', name: 'Chhattisgarh' }, { code: '23', name: 'Madhya Pradesh' }, { code: '24', name: 'Gujarat' },
+  { code: '25', name: 'Daman & Diu' }, { code: '26', name: 'Dadra & Nagar Haveli' }, { code: '27', name: 'Maharashtra' },
+  { code: '28', name: 'Andhra Pradesh (Old)' }, { code: '29', name: 'Karnataka' }, { code: '30', name: 'Goa' },
+  { code: '31', name: 'Lakshadweep' }, { code: '32', name: 'Kerala' }, { code: '33', name: 'Tamil Nadu' },
+  { code: '34', name: 'Puducherry' }, { code: '35', name: 'Andaman & Nicobar Islands' },
+  { code: '36', name: 'Telangana' }, { code: '37', name: 'Andhra Pradesh' }, { code: '38', name: 'Ladakh' },
 ];
 
 const GST_RATES = [0, 0.25, 3, 5, 12, 18, 28];
 const UNITS = ['Nos', 'Pcs', 'Kg', 'Gm', 'Ltr', 'Mtr', 'Sq.ft', 'Hrs', 'Box', 'Case', 'Set', 'Pair', 'Bag', 'Roll'];
 
-// ===== STATE MANAGEMENT =====
+//===== STATE MANAGEMENT =====
 let items = [];
 let supplyType = 'intra';
 let nextItemId = 1;
@@ -93,13 +93,13 @@ function updateSidebarAndAccessControls() {
   const name = currentUser.display_name || currentUser.username;
   $('#sidebarUserName').textContent = name;
   $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
-  
+
   const roleDisplay = currentUser.role === 'admin' ? 'Administrator' : 'Staff';
   const roleEl = $('#sidebarUserRole');
   if (roleEl) roleEl.textContent = roleDisplay;
 
   const isAdmin = currentUser.role === 'admin';
-  
+
   const usersLink = $('#sidebarLinkUsers');
   if (usersLink) usersLink.style.display = isAdmin ? 'flex' : 'none';
 
@@ -123,7 +123,7 @@ async function loadCurrentUser() {
 async function logout() {
   try {
     await fetch('/api/auth/logout', { method: 'POST' });
-  } catch (e) {}
+  } catch (e) { }
   window.location.href = '/login';
 }
 
@@ -527,8 +527,8 @@ function formatNumber(num) {
 function numberToWords(num) {
   if (num === 0) return 'Zero Rupees Only';
   if (num < 0) return 'Negative ' + numberToWords(-num);
-  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
-  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
   function convert(n) {
     if (n === 0) return '';
     if (n < 20) return ones[n] + ' ';
@@ -559,29 +559,29 @@ function populateSettingsForm() {
 
 async function saveSettings() {
   const data = {
-    name: ($('#settBizName').value || '').trim(), 
+    name: ($('#settBizName').value || '').trim(),
     gstin: ($('#settBizGstin').value || '').trim().toUpperCase(),
-    address: ($('#settBizAddress').value || '').trim(), 
+    address: ($('#settBizAddress').value || '').trim(),
     state_code: $('#settBizState').value,
-    phone: ($('#settBizPhone').value || '').trim(), 
+    phone: ($('#settBizPhone').value || '').trim(),
     email: ($('#settBizEmail').value || '').trim(),
     terms: ($('#settTerms').value || '').trim(),
   };
 
   if (!data.name) { showToast('Business Name is required', 'error'); return; }
   if (!data.gstin) { showToast('GSTIN is required', 'error'); return; }
-  
+
   const regexGstin = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i;
   if (!regexGstin.test(data.gstin)) {
     showToast('Invalid Business GSTIN format (e.g. 22AAAAA0000A1Z5)', 'error');
     return;
   }
-  
+
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     showToast('Invalid business email format', 'error');
     return;
   }
-  
+
   if (data.phone && !/^\d{10}$/.test(data.phone)) {
     showToast('Business phone number must be a valid 10-digit number.', 'error');
     return;
@@ -626,21 +626,21 @@ function hideProductForm() {
 
 async function saveProduct() {
   const data = {
-    description: $('#prodDescription').value.trim(), 
+    description: $('#prodDescription').value.trim(),
     hsn_sac: $('#prodHsn').value.trim(),
-    unit: $('#prodUnit').value, 
-    rate: parseFloat($('#prodRate').value), 
+    unit: $('#prodUnit').value,
+    rate: parseFloat($('#prodRate').value),
     gst_rate: parseFloat($('#prodGst').value) || 18,
     qty_per_unit: parseInt($('#prodQtyPerUnit').value, 10) || 1,
   };
 
   if (!data.description) { showToast('Product description is required', 'error'); return; }
-  
+
   if (data.hsn_sac && !/^\d{2,8}$/.test(data.hsn_sac)) {
     showToast('HSN/SAC code must be numeric and between 2 to 8 digits.', 'error');
     return;
   }
-  
+
   if (isNaN(data.rate) || data.rate < 0) {
     showToast('Product rate must be a non-negative number.', 'error');
     return;
@@ -761,22 +761,22 @@ async function saveCustomer() {
   };
 
   if (!data.name) { showToast('Customer name is required', 'error'); return; }
-  
+
   if (data.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(data.gstin)) {
     showToast('Invalid Customer GSTIN format (e.g. 22AAAAA0000A1Z5)', 'error');
     return;
   }
-  
+
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     showToast('Invalid customer email address format', 'error');
     return;
   }
-  
+
   if (data.phone && !/^\d{10}$/.test(data.phone)) {
     showToast('Customer phone number must be a valid 10-digit number.', 'error');
     return;
   }
-  
+
   if (!data.state_code) {
     showToast('Please select the customer state code.', 'error');
     return;
@@ -1051,7 +1051,7 @@ async function saveInvoiceToDb() {
   const buyerPhone = ($('#buyerPhone').value || '').trim();
   const buyerEmail = ($('#buyerEmail').value || '').trim();
   const buyerState = $('#buyerState').value;
-  
+
   if (!buyerName) {
     showToast('Customer Name is required to save invoice', 'error');
     throw new Error('Customer Name is required');
@@ -1061,32 +1061,32 @@ async function saveInvoiceToDb() {
     showToast('Invoice Date is required', 'error');
     throw new Error('Invoice Date is required');
   }
-  
+
   if (!dueDate) {
     showToast('Due Date is required', 'error');
     throw new Error('Due Date is required');
   }
-  
+
   if (!placeOfSupply) {
     showToast('Place of Supply is required', 'error');
     throw new Error('Place of Supply is required');
   }
-  
+
   if (!buyerState) {
     showToast('Buyer State is required', 'error');
     throw new Error('Buyer State is required');
   }
-  
+
   if (buyerGstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(buyerGstin)) {
     showToast('Invalid Buyer GSTIN format (e.g. 22AAAAA0000A1Z5)', 'error');
     throw new Error('Invalid Buyer GSTIN');
   }
-  
+
   if (buyerPhone && !/^\d{10}$/.test(buyerPhone)) {
     showToast('Buyer phone number must be a valid 10-digit number.', 'error');
     throw new Error('Invalid Buyer Phone');
   }
-  
+
   if (buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
     showToast('Invalid buyer email address format', 'error');
     throw new Error('Invalid Buyer Email');
@@ -1137,11 +1137,11 @@ async function saveInvoiceToDb() {
     amount_in_words: numberToWords(Math.round(grandTotal)),
     notes: $('#notes').value, items: dbItems,
   };
-  try { 
+  try {
     const res = await api('/api/invoices', { method: 'POST', body: data });
     return res;
-  } catch (e) { 
-    console.error('Failed to save invoice:', e); 
+  } catch (e) {
+    console.error('Failed to save invoice:', e);
     showToast('Failed to save invoice: ' + e.message, 'error');
     throw e;
   }
@@ -1163,7 +1163,7 @@ async function handleSaveButtonClick() {
 
 async function handleShareAction(invoiceId = null) {
   let finalInvoiceId = invoiceId;
-  
+
   if (!finalInvoiceId) {
     try {
       const result = await saveInvoiceToDb();
@@ -1178,17 +1178,17 @@ async function handleShareAction(invoiceId = null) {
       return;
     }
   }
-  
+
   try {
     const shareRes = await api(`/api/invoices/${finalInvoiceId}/share`, { method: 'POST' });
     if (shareRes && shareRes.share_token) {
       const shareUrl = `${window.location.origin}/share.html?token=${shareRes.share_token}`;
       $('#shareUrlInput').value = shareUrl;
-      
+
       const textMsg = encodeURIComponent(`Hi, please find your GST Tax Invoice here: ${shareUrl}`);
       $('#shareWhatsappBtn').href = `https://api.whatsapp.com/send?text=${textMsg}`;
       $('#shareEmailBtn').href = `mailto:?subject=GST%20Tax%20Invoice%20-%20${encodeURIComponent($('#invoiceNumber').value)}&body=${textMsg}`;
-      
+
       openShareModal();
     }
   } catch (err) {
@@ -1210,7 +1210,7 @@ function copyShareUrlToClipboard() {
   const input = $('#shareUrlInput');
   input.select();
   input.setSelectionRange(0, 99999);
-  
+
   try {
     navigator.clipboard.writeText(input.value);
     showToast('Link copied to clipboard!', 'success');
@@ -1325,8 +1325,10 @@ function renderMonthlySalesChart(monthlySales) {
         x: { grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { family: 'Inter', size: 10, weight: '500' } } },
         y: {
           position: 'left', grid: { color: 'rgba(148,163,184,0.06)' },
-          ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 },
-            callback: (v) => v >= 100000 ? '₹' + (v / 100000).toFixed(0) + 'L' : v >= 1000 ? '₹' + (v / 1000).toFixed(0) + 'K' : '₹' + v }
+          ticks: {
+            color: '#64748b', font: { family: 'JetBrains Mono', size: 10 },
+            callback: (v) => v >= 100000 ? '₹' + (v / 100000).toFixed(0) + 'L' : v >= 1000 ? '₹' + (v / 1000).toFixed(0) + 'K' : '₹' + v
+          }
         },
         y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: 'rgba(45,212,191,0.7)', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 }, beginAtZero: true }
       }
@@ -1338,7 +1340,7 @@ function renderTopProducts(prods) {
   const c = $('#dashTopProducts');
   if (!prods.length) { c.innerHTML = '<p class="dash-empty-state">No product data yet</p>'; return; }
   const mx = Math.max(...prods.map(p => p.total_revenue));
-  c.innerHTML = `<table class="dash-table"><thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead><tbody>${prods.map(p => `<tr><td><div class="dash-revenue-bar-wrap"><div class="dash-revenue-bar" style="width:${(p.total_revenue/mx*80).toFixed(0)}px"></div>${escapeHtml(p.description)}</div></td><td>${p.total_qty}</td><td>₹${formatNumber(p.total_revenue)}</td></tr>`).join('')}</tbody></table>`;
+  c.innerHTML = `<table class="dash-table"><thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead><tbody>${prods.map(p => `<tr><td><div class="dash-revenue-bar-wrap"><div class="dash-revenue-bar" style="width:${(p.total_revenue / mx * 80).toFixed(0)}px"></div>${escapeHtml(p.description)}</div></td><td>${p.total_qty}</td><td>₹${formatNumber(p.total_revenue)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function renderTopCustomers(custs) {
@@ -1350,7 +1352,7 @@ function renderTopCustomers(custs) {
 function renderRecentInvoicesTable(invs) {
   const c = $('#dashRecentInvoices');
   if (!invs.length) { c.innerHTML = '<p class="dash-empty-state">No invoices yet. Create your first invoice!</p>'; return; }
-  c.innerHTML = `<table class="dash-table"><thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Amount</th></tr></thead><tbody>${invs.map(inv => `<tr><td style="font-family:var(--font-mono);">${escapeHtml(inv.invoice_number)}</td><td>${escapeHtml(inv.buyer_name||'—')}</td><td>${formatDateDisplay(inv.invoice_date)}</td><td>₹${formatNumber(inv.grand_total||0)}</td></tr>`).join('')}</tbody></table>`;
+  c.innerHTML = `<table class="dash-table"><thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Amount</th></tr></thead><tbody>${invs.map(inv => `<tr><td style="font-family:var(--font-mono);">${escapeHtml(inv.invoice_number)}</td><td>${escapeHtml(inv.buyer_name || '—')}</td><td>${formatDateDisplay(inv.invoice_date)}</td><td>₹${formatNumber(inv.grand_total || 0)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 // ===== ADMIN USERS PAGE =====
@@ -1378,7 +1380,7 @@ function renderUsersList(usersList) {
     const isSelfAdmin = u.username === 'aishu';
     const activeText = u.is_active ? 'Active' : 'Deactivated';
     const statusClass = u.is_active ? 'badge-active' : 'badge-deactivated';
-    
+
     let roleActionHtml = '';
     if (isSelfAdmin) {
       roleActionHtml = `<span class="badge badge-seller" style="font-weight: 600;">System Admin</span>`;
@@ -1395,7 +1397,7 @@ function renderUsersList(usersList) {
         </div>
       `;
     }
-         
+
     const contacts = [];
     if (u.email) contacts.push(`Email: ${escapeHtml(u.email)}`);
     if (u.mobile) contacts.push(`Mobile: ${escapeHtml(u.mobile)}`);
