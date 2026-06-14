@@ -112,10 +112,6 @@ async function ensureInitialized() {
         state_code: '27',
         phone: '+91 98765 43210',
         email: 'billing@yourbusiness.com',
-        bank_name: 'State Bank of India',
-        account_number: '1234567890',
-        ifsc_code: 'SBIN0001234',
-        bank_branch: 'Main Branch, Mumbai',
         terms: '1. Payment is due within 30 days\n2. Goods once sold will not be taken back\n3. Subject to local jurisdiction'
       });
       console.log('  ✅ Seeded default business configuration');
@@ -130,6 +126,7 @@ async function ensureInitialized() {
         username: 'admin',
         password_hash: hash,
         display_name: 'Administrator',
+        is_active: true,
         created_at: new Date().toISOString()
       });
       await db.collection('counters').doc('users').set({ current: 1 });
@@ -231,10 +228,6 @@ async function updateBusinessConfig(data) {
     state_code: data.state_code || '',
     phone: data.phone || '',
     email: data.email || '',
-    bank_name: data.bank_name || '',
-    account_number: data.account_number || '',
-    ifsc_code: data.ifsc_code || '',
-    bank_branch: data.bank_branch || '',
     terms: data.terms || ''
   });
 }
@@ -318,15 +311,25 @@ async function getInvoiceById(id) {
 async function getNextInvoiceNumber() {
   await ensureInitialized();
   const snapshot = await db.collection('invoices').orderBy('id', 'desc').limit(1).get();
-  if (snapshot.empty) return 'INV-0001';
+  if (snapshot.empty) return 'BE-0001';
   
   const last = snapshot.docs[0].data();
-  const match = last.invoice_number.match(/INV-(\d+)/);
-  if (match) {
-    const next = parseInt(match[1], 10) + 1;
-    return `INV-${String(next).padStart(4, '0')}`;
+  
+  // Match BE- sequence
+  const matchBE = last.invoice_number.match(/BE-(\d+)/);
+  if (matchBE) {
+    const next = parseInt(matchBE[1], 10) + 1;
+    return `BE-${String(next).padStart(4, '0')}`;
   }
-  return `INV-${String(Date.now()).slice(-4)}`;
+  
+  // Match old INV- sequence to migrate seamlessly
+  const matchINV = last.invoice_number.match(/INV-(\d+)/);
+  if (matchINV) {
+    const next = parseInt(matchINV[1], 10) + 1;
+    return `BE-${String(next).padStart(4, '0')}`;
+  }
+  
+  return `BE-${String(Date.now()).slice(-4)}`;
 }
 
 async function saveInvoice(data) {
@@ -602,6 +605,51 @@ async function changePassword(userId, newPassword) {
   await db.collection('users').doc(userId.toString()).update({ password_hash: hash });
 }
 
+async function registerUser(data) {
+  await ensureInitialized();
+  const id = await getNextId('users');
+  const hash = bcrypt.hashSync(data.password, 10);
+  const user = {
+    id,
+    username: data.username.toLowerCase().trim(),
+    password_hash: hash,
+    display_name: data.display_name.trim(),
+    email: (data.email || '').trim(),
+    mobile: (data.mobile || '').trim(),
+    is_active: false, // Deactivated by default per plan
+    created_at: new Date().toISOString()
+  };
+  await db.collection('users').doc(id.toString()).set(user);
+  return { id: user.id, username: user.username, display_name: user.display_name };
+}
+
+async function getAllUsers() {
+  await ensureInitialized();
+  const snapshot = await db.collection('users').get();
+  const list = [];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    list.push({
+      id: data.id,
+      username: data.username,
+      display_name: data.display_name,
+      email: data.email || '',
+      mobile: data.mobile || '',
+      is_active: data.is_active === undefined ? true : data.is_active,
+      created_at: data.created_at
+    });
+  });
+  list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return list;
+}
+
+async function updateUserStatus(userId, isActive) {
+  await ensureInitialized();
+  await db.collection('users').doc(userId.toString()).update({
+    is_active: isActive
+  });
+}
+
 // ===== SHARE TOKEN =====
 async function getInvoiceByShareToken(token) {
   await ensureInitialized();
@@ -725,6 +773,9 @@ module.exports = {
   getUserByUsername,
   verifyPassword,
   changePassword,
+  registerUser,
+  getAllUsers,
+  updateUserStatus,
   getInvoiceByShareToken,
   generateShareToken,
   getCustomers,

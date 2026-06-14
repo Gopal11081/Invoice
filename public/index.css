@@ -246,6 +246,8 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
 .badge-seller { background:rgba(167,139,250,0.15); color:var(--accent-purple); border:1px solid rgba(167,139,250,0.25); }
 .badge-buyer { background:rgba(52,211,153,0.15); color:var(--accent-green); border:1px solid rgba(52,211,153,0.25); }
 .badge-codes { background:rgba(45,212,191,0.15); color:var(--accent-teal); border:1px solid rgba(45,212,191,0.25); }
+.badge-active { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.25); }
+.badge-deactivated { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); border: 1px solid rgba(248, 113, 113, 0.25); }
 
 /* ===== FORM ELEMENTS ===== */
 .form-grid { display: grid; gap: var(--gap-md); }
@@ -305,17 +307,6 @@ select { cursor:pointer; appearance:none; background-image:url("data:image/svg+x
 .gst-table td { padding:0.4rem 0.3rem; text-align:right; font-family:var(--font-mono); font-size:0.78rem; color:var(--text-secondary); border-bottom:1px solid rgba(148,163,184,0.05); }
 .gst-table td:first-child { text-align:left; font-weight:600; color:var(--accent-purple); }
 
-/* ===== CODES CARD ===== */
-.codes-card { border-color:rgba(45,212,191,0.15); }
-.codes-body { display:flex; flex-direction:column; gap:1rem; }
-.code-preview { display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
-.code-label { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-secondary); text-align:center; }
-.code-sublabel { font-weight:500; color:var(--text-muted); text-transform:none; letter-spacing:normal; }
-.code-divider { height:1px; background:var(--border-subtle); }
-.barcode-wrapper { background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:0.5rem; display:flex; align-items:center; justify-content:center; }
-.barcode-wrapper svg { max-width:100%; height:auto; }
-.qr-wrapper { display:flex; align-items:center; justify-content:center; }
-.qr-wrapper img { border-radius:4px; }
 
 /* ===== SELLER DISPLAY ===== */
 .card-readonly { border-color:rgba(167,139,250,0.12); }
@@ -464,11 +455,6 @@ select { cursor:pointer; appearance:none; background-image:url("data:image/svg+x
 .inv-bank-title, .inv-terms-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#4f46e5; margin-bottom:8px; }
 .inv-bank-info { font-size:12px; color:#334155; line-height:1.8; }
 .inv-terms-text { font-size:11px; color:#64748b; line-height:1.7; white-space:pre-line; }
-.inv-codes-section { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 0; border-top:1px solid #e2e8f0; margin-bottom:16px; }
-.inv-code-block { display:flex; flex-direction:column; align-items:center; gap:6px; }
-.inv-code-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; }
-.inv-barcode-container svg { max-width:200px; height:auto; }
-.inv-qr-container img { width:100px; height:100px; }
 .inv-signature { text-align:right; margin-top:40px; padding-top:16px; }
 .inv-sig-line { width:200px; border-top:1px solid #1a1a2e; margin-left:auto; margin-bottom:6px; }
 .inv-sig-label { font-size:11px; color:#64748b; }

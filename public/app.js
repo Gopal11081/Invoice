@@ -31,6 +31,7 @@ let products = [];
 let customers = [];
 let businessConfig = {};
 let currentPage = 'dashboard';
+let currentUser = null;
 
 // ===== DOM REFERENCES =====
 const $ = (sel) => document.querySelector(sel);
@@ -56,12 +57,36 @@ async function api(url, options = {}) {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async () => {
+  // Check auth first
+  try {
+    const auth = await api('/api/auth/check');
+    if (!auth.authenticated || !auth.user) {
+      window.location.href = '/login';
+      return;
+    }
+    currentUser = auth.user;
+    const name = currentUser.display_name || currentUser.username;
+    $('#sidebarUserName').textContent = name;
+    $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
+    
+    const link = $('#sidebarLinkUsers');
+    if (link) {
+      if (currentUser.username === 'admin') {
+        link.style.display = 'flex';
+      } else {
+        link.style.display = 'none';
+      }
+    }
+  } catch (e) {
+    window.location.href = '/login';
+    return;
+  }
+
   populateStateDropdowns();
   bindEvents();
   initRouter();
 
   try {
-    await loadCurrentUser();
     await Promise.all([loadBusinessConfig(), loadProducts(), loadCustomers(), loadNextInvoiceNumber()]);
   } catch (e) {
     console.error('Failed to load initial data:', e);
@@ -78,9 +103,19 @@ async function loadCurrentUser() {
   try {
     const data = await api('/api/auth/check');
     if (data.authenticated && data.user) {
+      currentUser = data.user;
       const name = data.user.display_name || data.user.username;
       $('#sidebarUserName').textContent = name;
       $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
+      
+      const link = $('#sidebarLinkUsers');
+      if (link) {
+        if (data.user.username === 'admin') {
+          link.style.display = 'flex';
+        } else {
+          link.style.display = 'none';
+        }
+      }
     }
   } catch (e) { /* redirect handled by api() */ }
 }
@@ -105,8 +140,14 @@ function handleRoute() {
 }
 
 function navigateTo(page) {
-  const validPages = ['dashboard', 'invoice', 'history', 'products', 'customers', 'settings'];
+  const validPages = ['dashboard', 'invoice', 'history', 'products', 'customers', 'settings', 'users'];
   if (!validPages.includes(page)) page = 'dashboard';
+
+  // Guard users page (admin only)
+  if (page === 'users' && (!currentUser || currentUser.username !== 'admin')) {
+    page = 'dashboard';
+    window.location.hash = '#/dashboard';
+  }
 
   currentPage = page;
 
@@ -129,6 +170,7 @@ function navigateTo(page) {
   if (page === 'products') { hideProductForm(); renderProductsList(); }
   if (page === 'customers') { hideCustomerForm(); renderCustomersList(); }
   if (page === 'settings') populateSettingsForm();
+  if (page === 'users') loadUsers();
 }
 
 // ===== MOBILE SIDEBAR =====
@@ -158,10 +200,6 @@ function applyBusinessConfig() {
   $('#sellerState').value = c.state_code || '';
   $('#sellerPhone').value = c.phone || '';
   $('#sellerEmail').value = c.email || '';
-  $('#bankName').value = c.bank_name || '';
-  $('#accountNumber').value = c.account_number || '';
-  $('#ifscCode').value = c.ifsc_code || '';
-  $('#bankBranch').value = c.bank_branch || '';
   $('#notes').value = c.terms || '';
   $('#dispSellerName').textContent = c.name || 'Your Business Name';
   $('#dispSellerGstin').textContent = c.gstin || '—';
@@ -461,7 +499,6 @@ function recalculate() {
   $('#summaryTotal').textContent = `₹${formatNumber(grandTotal)}`;
   $('#summaryWords').textContent = numberToWords(Math.round(grandTotal));
   renderGstBreakdown(gstBreakdown);
-  updateSidebarCodes(grandTotal);
 }
 
 function renderGstBreakdown(breakdown) {
@@ -515,22 +552,44 @@ function populateSettingsForm() {
   $('#settBizState').value = c.state_code || '';
   $('#settBizPhone').value = c.phone || '';
   $('#settBizEmail').value = c.email || '';
-  $('#settBankName').value = c.bank_name || '';
-  $('#settAccNumber').value = c.account_number || '';
-  $('#settIfsc').value = c.ifsc_code || '';
-  $('#settBranch').value = c.bank_branch || '';
   $('#settTerms').value = c.terms || '';
 }
 
 async function saveSettings() {
   const data = {
-    name: $('#settBizName').value, gstin: $('#settBizGstin').value,
-    address: $('#settBizAddress').value, state_code: $('#settBizState').value,
-    phone: $('#settBizPhone').value, email: $('#settBizEmail').value,
-    bank_name: $('#settBankName').value, account_number: $('#settAccNumber').value,
-    ifsc_code: $('#settIfsc').value, bank_branch: $('#settBranch').value,
-    terms: $('#settTerms').value,
+    name: ($('#settBizName').value || '').trim(), 
+    gstin: ($('#settBizGstin').value || '').trim().toUpperCase(),
+    address: ($('#settBizAddress').value || '').trim(), 
+    state_code: $('#settBizState').value,
+    phone: ($('#settBizPhone').value || '').trim(), 
+    email: ($('#settBizEmail').value || '').trim(),
+    terms: ($('#settTerms').value || '').trim(),
   };
+
+  if (!data.name) { showToast('Business Name is required', 'error'); return; }
+  if (!data.gstin) { showToast('GSTIN is required', 'error'); return; }
+  
+  const regexGstin = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i;
+  if (!regexGstin.test(data.gstin)) {
+    showToast('Invalid Business GSTIN format (e.g. 22AAAAA0000A1Z5)', 'error');
+    return;
+  }
+  
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    showToast('Invalid business email format', 'error');
+    return;
+  }
+  
+  if (data.phone && !/^[6-9]\d{9}$/.test(data.phone)) {
+    showToast('Business phone number must be a valid 10-digit number.', 'error');
+    return;
+  }
+
+  if (!data.state_code) {
+    showToast('Please select state code', 'error');
+    return;
+  }
+
   try {
     businessConfig = await api('/api/business', { method: 'PUT', body: data });
     applyBusinessConfig();
@@ -564,10 +623,25 @@ function hideProductForm() {
 
 async function saveProduct() {
   const data = {
-    description: $('#prodDescription').value.trim(), hsn_sac: $('#prodHsn').value.trim(),
-    unit: $('#prodUnit').value, rate: parseFloat($('#prodRate').value) || 0, gst_rate: parseFloat($('#prodGst').value) || 18,
+    description: $('#prodDescription').value.trim(), 
+    hsn_sac: $('#prodHsn').value.trim(),
+    unit: $('#prodUnit').value, 
+    rate: parseFloat($('#prodRate').value), 
+    gst_rate: parseFloat($('#prodGst').value) || 18,
   };
+
   if (!data.description) { showToast('Product description is required', 'error'); return; }
+  
+  if (data.hsn_sac && !/^\d{2,8}$/.test(data.hsn_sac)) {
+    showToast('HSN/SAC code must be numeric and between 2 to 8 digits.', 'error');
+    return;
+  }
+  
+  if (isNaN(data.rate) || data.rate < 0) {
+    showToast('Product rate must be a non-negative number.', 'error');
+    return;
+  }
+
   try {
     if (editingProductId) {
       await api(`/api/products/${editingProductId}`, { method: 'PUT', body: data });
@@ -672,13 +746,35 @@ function hideCustomerForm() {
 async function saveCustomer() {
   const data = {
     name: $('#custName').value.trim(),
-    gstin: $('#custGstin').value.trim(),
+    gstin: $('#custGstin').value.trim().toUpperCase(),
     state_code: $('#custState').value,
     address: $('#custAddress').value.trim(),
     phone: $('#custPhone').value.trim(),
     email: $('#custEmail').value.trim(),
   };
+
   if (!data.name) { showToast('Customer name is required', 'error'); return; }
+  
+  if (data.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(data.gstin)) {
+    showToast('Invalid Customer GSTIN format (e.g. 22AAAAA0000A1Z5)', 'error');
+    return;
+  }
+  
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    showToast('Invalid customer email address format', 'error');
+    return;
+  }
+  
+  if (data.phone && !/^[6-9]\d{9}$/.test(data.phone)) {
+    showToast('Customer phone number must be a valid 10-digit number.', 'error');
+    return;
+  }
+  
+  if (!data.state_code) {
+    showToast('Please select the customer state code.', 'error');
+    return;
+  }
+
   try {
     if (editingCustomerId) {
       await api(`/api/customers/${editingCustomerId}`, { method: 'PUT', body: data });
@@ -720,6 +816,7 @@ function renderCustomersList() {
           <span>GSTIN: ${c.gstin || '—'}</span>
           <span>State: ${getStateName(c.state_code) || '—'}</span>
           <span>Phone: ${c.phone || '—'}</span>
+          <span>Created: ${c.created_at ? formatDateDisplay(c.created_at) : '—'}</span>
         </div>
       </div>
       <div class="product-item-actions">
@@ -840,23 +937,6 @@ function resetInvoice() {
   showToast('Invoice form reset', 'success');
 }
 
-// ===== BARCODE & QR =====
-function updateSidebarCodes(grandTotal) {
-  const invNum = $('#invoiceNumber').value || 'INV-0001';
-  try {
-    JsBarcode('#barcodePreview', invNum, {
-      format: 'CODE128', width: 1.5, height: 45, displayValue: true,
-      font: 'JetBrains Mono', fontSize: 12, margin: 4, background: 'transparent', lineColor: '#94a3b8',
-    });
-  } catch (e) { console.warn('Barcode error:', e); }
-  try {
-    const qrData = `Invoice: ${invNum}\nDate: ${$('#invoiceDate').value}\nAmount: ₹${formatNumber(grandTotal)}`;
-    const qr = qrcode(0, 'M');
-    qr.addData(qrData);
-    qr.make();
-    $('#qrPreview').innerHTML = qr.createImgTag(3, 4);
-  } catch (e) { console.warn('QR error:', e); }
-}
 
 // ===== INVOICE PREVIEW =====
 function openPreview() {
@@ -872,7 +952,7 @@ function closePreview() {
 }
 
 function generateInvoiceHtml() {
-  const invNum = $('#invoiceNumber').value || 'INV-0001';
+  const invNum = $('#invoiceNumber').value || 'BE-0001';
   const invDate = formatDateDisplay($('#invoiceDate').value);
   const dueDate = formatDateDisplay($('#dueDate').value);
   const seller = {
@@ -915,10 +995,6 @@ function generateInvoiceHtml() {
   const taxRows = supplyType === 'intra'
     ? `<div class="inv-totals-row"><span>CGST</span><span class="val">₹${formatNumber(totalCgst)}</span></div><div class="inv-totals-row"><span>SGST</span><span class="val">₹${formatNumber(totalSgst)}</span></div>`
     : `<div class="inv-totals-row"><span>IGST</span><span class="val">₹${formatNumber(totalIgst)}</span></div>`;
-  const bank = {
-    name: $('#bankName').value, account: $('#accountNumber').value,
-    ifsc: $('#ifscCode').value, branch: $('#bankBranch').value,
-  };
   const terms = ($('#notes').value || '').replace(/\\n/g, '\n');
 
   return `
@@ -931,8 +1007,7 @@ function generateInvoiceHtml() {
     <div class="inv-totals"><div class="inv-totals-table"><div class="inv-totals-row"><span>Subtotal</span><span class="val">₹${formatNumber(subtotal)}</span></div>${totalDiscount > 0 ? `<div class="inv-totals-row discount"><span>Discount</span><span class="val">−₹${formatNumber(totalDiscount)}</span></div>` : ''}<div class="inv-totals-row"><span>Taxable Amount</span><span class="val">₹${formatNumber(taxableTotal)}</span></div><hr class="inv-totals-divider">${taxRows}<div class="inv-totals-row total"><span>Grand Total</span><span class="val">₹${formatNumber(grandTotal)}</span></div></div></div>
     <div class="inv-amount-words"><strong>Amount in Words:</strong> ${numberToWords(Math.round(grandTotal))}</div>
     <table class="inv-gst-table"><thead><tr>${gstTableHeaders}</tr></thead><tbody>${gstRows}</tbody></table>
-    ${bank.name || bank.account ? `<div class="inv-bank-section"><div><div class="inv-bank-title">Bank Details</div><div class="inv-bank-info">${bank.name ? '<strong>Bank:</strong> ' + escapeHtml(bank.name) + '<br>' : ''}${bank.account ? '<strong>A/C:</strong> ' + escapeHtml(bank.account) + '<br>' : ''}${bank.ifsc ? '<strong>IFSC:</strong> ' + escapeHtml(bank.ifsc) + '<br>' : ''}${bank.branch ? '<strong>Branch:</strong> ' + escapeHtml(bank.branch) : ''}</div></div><div><div class="inv-terms-title">Terms & Conditions</div><div class="inv-terms-text">${escapeHtml(terms)}</div></div></div>` : ''}
-    <div class="inv-codes-section"><div class="inv-code-block"><div class="inv-code-title">Barcode</div><div class="inv-barcode-container"><svg id="invoiceBarcode"></svg></div></div><div class="inv-code-block"><div class="inv-code-title">QR Code</div><div class="inv-qr-container" id="invoiceQr"></div></div></div>
+    ${terms ? `<div class="inv-bank-section"><div style="grid-column: 1/-1;"><div class="inv-terms-title">Terms & Conditions</div><div class="inv-terms-text">${escapeHtml(terms)}</div></div></div>` : ''}
     <div class="inv-signature"><div class="inv-sig-line"></div><div class="inv-sig-label">Authorized Signatory</div></div>
     <div class="inv-footer">This is a computer-generated invoice. Generated by InvoiceGST.</div>
   `;
@@ -941,7 +1016,6 @@ function generateInvoiceHtml() {
 // ===== PDF & PRINT =====
 async function generatePdf() {
   openPreview();
-  await renderInvoiceCodes();
   await saveInvoiceToDb();
   const el = $('#invoicePreview');
   const opt = {
@@ -954,36 +1028,58 @@ async function generatePdf() {
 
 async function printInvoice() {
   openPreview();
-  await renderInvoiceCodes();
   await saveInvoiceToDb();
   setTimeout(() => window.print(), 500);
 }
 
-async function renderInvoiceCodes() {
-  await new Promise(r => setTimeout(r, 100));
-  const invNum = $('#invoiceNumber').value || 'INV-0001';
-  try {
-    JsBarcode('#invoiceBarcode', invNum, {
-      format: 'CODE128', width: 1.5, height: 40, displayValue: true,
-      font: 'JetBrains Mono', fontSize: 11, margin: 4, background: 'transparent', lineColor: '#1a1a2e',
-    });
-  } catch (e) {}
-  try {
-    const grandTotal = parseFloat($('#summaryTotal').textContent.replace(/[₹,]/g, '')) || 0;
-    const qrData = `Invoice: ${invNum}\nDate: ${$('#invoiceDate').value}\nBuyer: ${$('#buyerName').value}\nGSTIN: ${$('#sellerGstin').value}\nAmount: ₹${formatNumber(grandTotal)}`;
-    const qr = qrcode(0, 'M');
-    qr.addData(qrData);
-    qr.make();
-    const qrContainer = $('#invoiceQr');
-    if (qrContainer) qrContainer.innerHTML = qr.createImgTag(3, 4);
-  } catch (e) {}
-}
-
 async function saveInvoiceToDb() {
   const buyerName = ($('#buyerName').value || '').trim();
+  const invoiceDate = $('#invoiceDate').value;
+  const dueDate = $('#dueDate').value;
+  const placeOfSupply = $('#placeOfSupply').value;
+  const buyerGstin = ($('#buyerGstin').value || '').trim().toUpperCase();
+  const buyerPhone = ($('#buyerPhone').value || '').trim();
+  const buyerEmail = ($('#buyerEmail').value || '').trim();
+  const buyerState = $('#buyerState').value;
+  
   if (!buyerName) {
     showToast('Customer Name is required to save invoice', 'error');
     throw new Error('Customer Name is required');
+  }
+
+  if (!invoiceDate) {
+    showToast('Invoice Date is required', 'error');
+    throw new Error('Invoice Date is required');
+  }
+  
+  if (!dueDate) {
+    showToast('Due Date is required', 'error');
+    throw new Error('Due Date is required');
+  }
+  
+  if (!placeOfSupply) {
+    showToast('Place of Supply is required', 'error');
+    throw new Error('Place of Supply is required');
+  }
+  
+  if (!buyerState) {
+    showToast('Buyer State is required', 'error');
+    throw new Error('Buyer State is required');
+  }
+  
+  if (buyerGstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(buyerGstin)) {
+    showToast('Invalid Buyer GSTIN format (e.g. 22AAAAA0000A1Z5)', 'error');
+    throw new Error('Invalid Buyer GSTIN');
+  }
+  
+  if (buyerPhone && !/^[6-9]\d{9}$/.test(buyerPhone)) {
+    showToast('Buyer phone number must be a valid 10-digit number.', 'error');
+    throw new Error('Invalid Buyer Phone');
+  }
+  
+  if (buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
+    showToast('Invalid buyer email address format', 'error');
+    throw new Error('Invalid Buyer Email');
   }
 
   if (items.length === 0) {
@@ -1245,6 +1341,84 @@ function renderRecentInvoicesTable(invs) {
   const c = $('#dashRecentInvoices');
   if (!invs.length) { c.innerHTML = '<p class="dash-empty-state">No invoices yet. Create your first invoice!</p>'; return; }
   c.innerHTML = `<table class="dash-table"><thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Amount</th></tr></thead><tbody>${invs.map(inv => `<tr><td style="font-family:var(--font-mono);">${escapeHtml(inv.invoice_number)}</td><td>${escapeHtml(inv.buyer_name||'—')}</td><td>${formatDateDisplay(inv.invoice_date)}</td><td>₹${formatNumber(inv.grand_total||0)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// ===== ADMIN USERS PAGE =====
+async function loadUsers() {
+  const container = $('#usersList');
+  if (!container) return;
+  container.innerHTML = '<p class="page-empty-state">Loading user accounts...</p>';
+  try {
+    const usersList = await api('/api/admin/users');
+    renderUsersList(usersList);
+  } catch (e) {
+    container.innerHTML = `<p class="page-empty-state error">Failed to load users: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function renderUsersList(usersList) {
+  const container = $('#usersList');
+  if (!container) return;
+  if (usersList.length === 0) {
+    container.innerHTML = '<p class="page-empty-state">No users registered.</p>';
+    return;
+  }
+  container.innerHTML = usersList.map(u => {
+    const isSelfAdmin = u.username === 'admin';
+    const activeText = u.is_active ? 'Active' : 'Deactivated';
+    const statusClass = u.is_active ? 'badge-active' : 'badge-deactivated';
+    const actionButton = isSelfAdmin 
+      ? `<span class="badge badge-seller">System Admin</span>`
+      : `<button class="btn btn-sm ${u.is_active ? 'btn-outline' : 'btn-primary'} btn-toggle-status" data-id="${u.id}" data-active="${u.is_active}">
+          ${u.is_active ? 'Deactivate' : 'Activate'}
+         </button>`;
+         
+    const contacts = [];
+    if (u.email) contacts.push(`Email: ${escapeHtml(u.email)}`);
+    if (u.mobile) contacts.push(`Mobile: ${escapeHtml(u.mobile)}`);
+    const contactText = contacts.length > 0 ? `<span>${contacts.join(' · ')}</span>` : '';
+
+    return `
+      <div class="product-item" data-id="${u.id}">
+        <div class="product-item-info">
+          <div class="product-item-name" style="display: flex; align-items: center; gap: 0.75rem;">
+            ${escapeHtml(u.display_name)} 
+            <span class="badge ${statusClass}">${activeText}</span>
+          </div>
+          <div class="product-item-meta" style="margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            <span>Username: @${escapeHtml(u.username)}</span>
+            <span>Registered: ${formatDateDisplay(u.created_at)}</span>
+            ${contactText}
+          </div>
+        </div>
+        <div class="product-item-actions">
+          ${actionButton}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.btn-toggle-status').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const userId = parseInt(btn.dataset.id);
+      const currentStatus = btn.dataset.active === 'true';
+      await toggleUserStatus(userId, currentStatus);
+    });
+  });
+}
+
+async function toggleUserStatus(userId, currentStatus) {
+  const newStatus = !currentStatus;
+  try {
+    await api(`/api/admin/users/${userId}/status`, {
+      method: 'PUT',
+      body: { is_active: newStatus }
+    });
+    showToast(`User ${newStatus ? 'activated' : 'deactivated'} successfully!`, 'success');
+    await loadUsers();
+  } catch (e) {
+    showToast('Failed to update user status: ' + e.message, 'error');
+  }
 }
 
 // ===== TOAST =====

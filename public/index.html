@@ -76,6 +76,10 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         <span>Settings</span>
       </a>
+      <a href="#/users" class="sidebar-link" data-page="users" id="sidebarLinkUsers" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Users</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -196,7 +200,7 @@
               </div>
               <div class="card-body">
                 <div class="form-grid cols-3">
-                  <div class="form-group"><label for="invoiceNumber">Invoice Number</label><input type="text" id="invoiceNumber" placeholder="INV-0001" /></div>
+                  <div class="form-group"><label for="invoiceNumber">Invoice Number</label><input type="text" id="invoiceNumber" placeholder="BE-0001" readonly style="background: rgba(255, 255, 255, 0.02); color: var(--text-muted); cursor: not-allowed;" /></div>
                   <div class="form-group"><label for="invoiceDate">Invoice Date</label><input type="date" id="invoiceDate" /></div>
                   <div class="form-group"><label for="dueDate">Due Date</label><input type="date" id="dueDate" /></div>
                 </div>
@@ -234,7 +238,7 @@
                     <div class="seller-gstin-value mono" id="dispSellerGstin">—</div>
                   </div>
                 </div>
-                <input type="hidden" id="sellerName" /><input type="hidden" id="sellerGstin" /><input type="hidden" id="sellerAddress" /><input type="hidden" id="sellerState" /><input type="hidden" id="sellerPhone" /><input type="hidden" id="sellerEmail" /><input type="hidden" id="bankName" /><input type="hidden" id="accountNumber" /><input type="hidden" id="ifscCode" /><input type="hidden" id="bankBranch" /><input type="hidden" id="notes" />
+                <input type="hidden" id="sellerName" /><input type="hidden" id="sellerGstin" /><input type="hidden" id="sellerAddress" /><input type="hidden" id="sellerState" /><input type="hidden" id="sellerPhone" /><input type="hidden" id="sellerEmail" /><input type="hidden" id="notes" />
               </div>
             </section>
 
@@ -297,14 +301,7 @@
                   <div class="gst-breakdown" id="gstBreakdown"><h3>GST Breakdown</h3><table class="gst-table"><thead><tr><th>Rate</th><th>Taxable</th><th id="gstColHeader1">CGST</th><th id="gstColHeader2">SGST</th><th>Total Tax</th></tr></thead><tbody id="gstBreakdownBody"></tbody></table></div>
                 </div>
               </section>
-              <section class="card card-glow codes-card" id="sectionCodes">
-                <div class="card-header"><div class="card-icon gradient-teal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg></div><h2>Barcode & QR</h2><span class="badge badge-codes">Live</span></div>
-                <div class="card-body codes-body">
-                  <div class="code-preview"><div class="code-label">Barcode <span class="code-sublabel">(Invoice #)</span></div><div class="barcode-wrapper" id="barcodePreviewWrapper"><svg id="barcodePreview"></svg></div></div>
-                  <div class="code-divider"></div>
-                  <div class="code-preview"><div class="code-label">QR Code <span class="code-sublabel">(Invoice Details)</span></div><div class="qr-wrapper" id="qrPreviewWrapper"><div id="qrPreview"></div></div></div>
-                </div>
-              </section>
+
               <div class="action-buttons">
                 <button class="btn btn-large btn-primary" id="btnSaveInvoice"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg> Save Invoice</button>
                 <button class="btn btn-large btn-gradient" id="btnGeneratePdf"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF</button>
@@ -396,15 +393,21 @@
             <div class="form-group"><label for="settBizPhone">Phone</label><input type="tel" id="settBizPhone" placeholder="+91 98765 43210" /></div>
             <div class="form-group"><label for="settBizEmail">Email</label><input type="email" id="settBizEmail" placeholder="billing@company.com" /></div>
           </div>
-          <h3 class="settings-section-title">Bank Details</h3>
-          <div class="form-grid cols-2">
-            <div class="form-group"><label for="settBankName">Bank Name</label><input type="text" id="settBankName" placeholder="State Bank of India" /></div>
-            <div class="form-group"><label for="settAccNumber">Account Number</label><input type="text" id="settAccNumber" placeholder="1234567890" class="mono" /></div>
-            <div class="form-group"><label for="settIfsc">IFSC Code</label><input type="text" id="settIfsc" placeholder="SBIN0000123" class="mono" /></div>
-            <div class="form-group"><label for="settBranch">Branch</label><input type="text" id="settBranch" placeholder="Main Branch, City" /></div>
-          </div>
+
           <h3 class="settings-section-title">Default Terms & Conditions</h3>
           <div class="form-group"><textarea id="settTerms" rows="4" placeholder="1. Payment is due within 30 days&#10;2. Goods once sold will not be taken back"></textarea></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PAGE: USERS (ADMIN ONLY) ========== -->
+    <section class="page" id="pageUsers">
+      <div class="page-header">
+        <h1 class="page-title">🛡️ User Accounts</h1>
+      </div>
+      <div class="page-body">
+        <div class="products-list" id="usersList">
+          <p class="page-empty-state">Loading users...</p>
         </div>
       </div>
     </section>
@@ -460,8 +463,7 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>

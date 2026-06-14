@@ -42,6 +42,12 @@ app.get(['/login', '/login.html'], (req, res) => {
 app.get('/login.css', (req, res) => {
   sendPublicFile(res, 'login.css');
 });
+app.get(['/register', '/register.html'], (req, res) => {
+  sendPublicFile(res, 'register.html');
+});
+app.get('/register.css', (req, res) => {
+  sendPublicFile(res, 'register.css');
+});
 app.get(['/share', '/share.html'], (req, res) => {
   sendPublicFile(res, 'share.html');
 });
@@ -71,6 +77,12 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
+    // Check if account is active
+    const isActive = user.is_active !== false;
+    if (!isActive) {
+      return res.status(403).json({ error: 'Your account is deactivated. Please contact the administrator.' });
+    }
+
     // Set session
     req.session.userId = user.id;
     req.session.username = user.username;
@@ -79,6 +91,39 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({
       success: true,
       user: { id: user.id, username: user.username, display_name: user.display_name },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/register
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password, display_name, email, mobile } = req.body;
+  if (!username || !password || !display_name) {
+    return res.status(400).json({ error: 'Username, password and display name are required' });
+  }
+  if (!email && !mobile) {
+    return res.status(400).json({ error: 'Either Email Address or Mobile Number is required' });
+  }
+  if (username.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters' });
+  }
+  if (password.length < 4) {
+    return res.status(400).json({ error: 'Password must be at least 4 characters' });
+  }
+
+  try {
+    const existing = await db.getUserByUsername(username);
+    if (existing) {
+      return res.status(400).json({ error: 'Username is already taken' });
+    }
+
+    const newUser = await db.registerUser({ username, password, display_name, email, mobile });
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful! Please wait for the administrator to activate your account.',
+      user: newUser
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -301,6 +346,38 @@ app.get('/api/public/invoices/:token', async (req, res) => {
     if (!invoice) return res.status(404).json({ error: 'Invoice not found or link expired' });
     res.json(invoice);
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== ADMIN USER CONTROL ROUTES =====
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.username === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Access denied. Administrator privileges required.' });
+}
+
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    res.json(await db.getAllUsers());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/users/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { is_active } = req.body;
+    
+    if (userId === 1 || req.params.id === '1') {
+      return res.status(400).json({ error: 'Cannot modify admin user status.' });
+    }
+    
+    await db.updateUserStatus(userId, is_active);
+    res.json({ success: true, message: 'User status updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ===== START SERVER =====
