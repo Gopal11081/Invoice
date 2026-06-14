@@ -258,6 +258,7 @@ async function addProduct(data) {
     unit: data.unit || 'Nos',
     rate: Number(data.rate) || 0,
     gst_rate: Number(data.gst_rate) || 18,
+    qty_per_unit: Number(data.qty_per_unit) || 1,
     is_active: 1,
     created_at: new Date().toISOString()
   };
@@ -273,7 +274,8 @@ async function updateProduct(id, data) {
     hsn_sac: data.hsn_sac || '',
     unit: data.unit || 'Nos',
     rate: Number(data.rate) || 0,
-    gst_rate: Number(data.gst_rate) || 18
+    gst_rate: Number(data.gst_rate) || 18,
+    qty_per_unit: Number(data.qty_per_unit) || 1
   });
 }
 

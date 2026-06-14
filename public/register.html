@@ -152,10 +152,21 @@
 
       const displayName = document.getElementById('registerDisplayName').value.trim();
       const email = document.getElementById('registerEmail').value.trim();
-      const mobile = document.getElementById('registerMobile').value.trim();
+      const mobileRaw = document.getElementById('registerMobile').value.trim();
       const username = document.getElementById('registerUsername').value.trim();
       const password = pwField.value;
       const confirmPassword = confirmField.value;
+
+      let mobile = '';
+      if (mobileRaw) {
+        let normalized = mobileRaw.replace(/\D/g, '');
+        if (normalized.length === 12 && normalized.startsWith('91')) {
+          normalized = normalized.substring(2);
+        } else if (normalized.length === 11 && normalized.startsWith('0')) {
+          normalized = normalized.substring(1);
+        }
+        mobile = normalized;
+      }
 
       if (!displayName) {
         showError('Full Name is required');
@@ -172,7 +183,7 @@
         return;
       }
 
-      if (mobile && !/^[6-9]\d{9}$/.test(mobile)) {
+      if (mobile && !/^\d{10}$/.test(mobile)) {
         showError('Mobile number must be a valid 10-digit number (e.g. 9876543210)');
         return;
       }

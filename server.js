@@ -14,11 +14,13 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
-// Session setup (Stateless Cookie Session for Serverless compatibility)
 app.use(session({
   name: 'invoice-gst-session',
   keys: [process.env.SESSION_SECRET || 'invoice-gst-session-secret-key-12345'],
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  httpOnly: true, // Prevents client-side script access to session cookie
+  secure: process.env.NODE_ENV === 'production', // Only transmit cookie over HTTPS in production
+  sameSite: 'lax' // Mitigate CSRF risks
 }));
 
 // ===== STATIC FILES (publicly accessible) =====
@@ -100,10 +102,25 @@ app.post('/api/auth/login', async (req, res) => {
 // POST /api/auth/register
 app.post('/api/auth/register', async (req, res) => {
   const { username, password, display_name, email, mobile } = req.body;
+
   if (!username || !password || !display_name) {
     return res.status(400).json({ error: 'Username, password and display name are required' });
   }
-  if (!email && !mobile) {
+
+  let normalizedMobile = '';
+  if (mobile) {
+    normalizedMobile = mobile.replace(/\D/g, '');
+    if (normalizedMobile.length === 12 && normalizedMobile.startsWith('91')) {
+      normalizedMobile = normalizedMobile.substring(2);
+    } else if (normalizedMobile.length === 11 && normalizedMobile.startsWith('0')) {
+      normalizedMobile = normalizedMobile.substring(1);
+    }
+    if (!/^\d{10}$/.test(normalizedMobile)) {
+      return res.status(400).json({ error: 'Mobile number must be a valid 10-digit number' });
+    }
+  }
+
+  if (!email && !normalizedMobile) {
     return res.status(400).json({ error: 'Either Email Address or Mobile Number is required' });
   }
   if (username.length < 3) {
@@ -119,7 +136,7 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Username is already taken' });
     }
 
-    const newUser = await db.registerUser({ username, password, display_name, email, mobile });
+    const newUser = await db.registerUser({ username, password, display_name, email, mobile: normalizedMobile });
     res.status(201).json({
       success: true,
       message: 'Registration successful! Please wait for the administrator to activate your account.',

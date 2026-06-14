@@ -21,7 +21,7 @@ const INDIAN_STATES = [
 ];
 
 const GST_RATES = [0, 0.25, 3, 5, 12, 18, 28];
-const UNITS = ['Nos', 'Pcs', 'Kg', 'Gm', 'Ltr', 'Mtr', 'Sq.ft', 'Hrs', 'Box', 'Set', 'Pair', 'Bag', 'Roll'];
+const UNITS = ['Nos', 'Pcs', 'Kg', 'Gm', 'Ltr', 'Mtr', 'Sq.ft', 'Hrs', 'Box', 'Case', 'Set', 'Pair', 'Bag', 'Roll'];
 
 // ===== STATE MANAGEMENT =====
 let items = [];
@@ -223,7 +223,7 @@ async function loadNextInvoiceNumber() {
 
 // ===== STATE DROPDOWNS =====
 function populateStateDropdowns() {
-  ['#placeOfSupply', '#buyerState', '#settBizState', '#custState'].forEach(sel => {
+  ['#settBizState', '#custState'].forEach(sel => {
     const dropdown = $(sel);
     if (!dropdown) return;
     dropdown.innerHTML = dropdown.tagName === 'SELECT' && dropdown.options[0]?.value === '' ? '<option value="">Select State</option>' : '';
@@ -251,15 +251,21 @@ function setDefaultDates() {
 function formatDateISO(date) { return date.toISOString().split('T')[0]; }
 function formatDateDisplay(dateStr) {
   if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
+  let d;
+  if (dateStr.includes('T')) {
+    d = new Date(dateStr);
+  } else {
+    d = new Date(dateStr + 'T00:00:00');
+  }
+  if (isNaN(d.getTime())) {
+    d = new Date(dateStr);
+  }
+  if (isNaN(d.getTime())) return 'Invalid Date';
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 // ===== EVENT BINDINGS =====
 function bindEvents() {
-  // Supply type
-  $('#toggleIntra').addEventListener('click', () => setSupplyType('intra'));
-  $('#toggleInter').addEventListener('click', () => setSupplyType('inter'));
   $('#buyerState').addEventListener('change', autoDetectSupplyType);
 
   // Items
@@ -307,7 +313,7 @@ function bindEvents() {
     if (match) {
       $('#buyerGstin').value = match.gstin || '';
       $('#buyerAddress').value = match.address || '';
-      $('#buyerState').value = match.state_code || '';
+      $('#buyerState').value = '29'; // Force Karnataka
       $('#buyerPhone').value = match.phone || '';
       $('#buyerEmail').value = match.email || '';
       autoDetectSupplyType();
@@ -337,45 +343,39 @@ function populateProductFormSelects() {
     opt.value = u; opt.textContent = u;
     unitSel.appendChild(opt);
   });
-  const gstSel = $('#prodGst');
-  GST_RATES.forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = r; opt.textContent = `${r}%`;
-    if (r === 18) opt.selected = true;
-    gstSel.appendChild(opt);
-  });
 }
 
 // ===== SUPPLY TYPE =====
 function setSupplyType(type) {
-  supplyType = type;
-  $('#toggleIntra').classList.toggle('active', type === 'intra');
-  $('#toggleInter').classList.toggle('active', type === 'inter');
-  $('#taxBreakdownIntra').style.display = type === 'intra' ? 'block' : 'none';
-  $('#taxBreakdownInter').style.display = type === 'inter' ? 'block' : 'none';
-  if (type === 'intra') {
-    $('#gstColHeader1').textContent = 'CGST';
-    $('#gstColHeader2').textContent = 'SGST';
-    $('#gstColHeader2').style.display = '';
-  } else {
-    $('#gstColHeader1').textContent = 'IGST';
-    $('#gstColHeader2').style.display = 'none';
+  supplyType = 'intra';
+  const toggleIntra = $('#toggleIntra');
+  if (toggleIntra) toggleIntra.classList.add('active');
+  const toggleInter = $('#toggleInter');
+  if (toggleInter) toggleInter.classList.remove('active');
+  const intraBreakdown = $('#taxBreakdownIntra');
+  if (intraBreakdown) intraBreakdown.style.display = 'block';
+  const interBreakdown = $('#taxBreakdownInter');
+  if (interBreakdown) interBreakdown.style.display = 'none';
+
+  const h1 = $('#gstColHeader1');
+  if (h1) h1.textContent = 'CGST';
+  const h2 = $('#gstColHeader2');
+  if (h2) {
+    h2.textContent = 'SGST';
+    h2.style.display = '';
   }
   recalculate();
 }
 
 function autoDetectSupplyType() {
-  const sellerState = $('#sellerState').value;
-  const buyerState = $('#buyerState').value;
-  if (sellerState && buyerState) {
-    setSupplyType(sellerState === buyerState ? 'intra' : 'inter');
-    $('#placeOfSupply').value = buyerState;
-  }
+  // Always lock place of supply to '29' (Karnataka)
+  $('#placeOfSupply').value = '29';
+  setSupplyType('intra');
 }
 
 // ===== LINE ITEMS =====
 function addItem() {
-  items.push({ id: nextItemId++, productId: '', description: '', hsn: '', qty: 1, unit: 'Nos', rate: 0, discount: 0, gstRate: 18 });
+  items.push({ id: nextItemId++, productId: '', description: '', hsn: '', qty: 1, unit: 'Nos', rate: 0, discount: 0, gstRate: 18, qtyPerUnit: 1 });
   renderItems();
   recalculate();
 }
@@ -402,12 +402,13 @@ function onProductSelect(itemId, productId) {
   const item = items.find(i => i.id === itemId);
   if (!item) return;
   if (productId === '__custom__') {
-    item.productId = ''; item.description = ''; item.hsn = ''; item.unit = 'Nos'; item.rate = 0; item.gstRate = 18;
+    item.productId = ''; item.description = ''; item.hsn = ''; item.unit = 'Nos'; item.rate = 0; item.gstRate = 18; item.qtyPerUnit = 1;
   } else {
     const product = products.find(p => p.id === parseInt(productId));
     if (product) {
       item.productId = product.id; item.description = product.description; item.hsn = product.hsn_sac;
       item.unit = product.unit; item.rate = product.rate; item.gstRate = product.gst_rate;
+      item.qtyPerUnit = product.qty_per_unit || 1;
     }
   }
   renderItems();
@@ -424,7 +425,8 @@ function renderItems() {
     const isCustom = !item.productId;
     let productOptions = `<option value="">— Select Product —</option>`;
     products.forEach(p => {
-      productOptions += `<option value="${p.id}" ${item.productId === p.id ? 'selected' : ''}>${escapeHtml(p.description)}</option>`;
+      const displayLabel = escapeHtml(p.description) + (p.qty_per_unit && p.qty_per_unit > 1 ? ` (${p.qty_per_unit})` : '');
+      productOptions += `<option value="${p.id}" ${item.productId === p.id ? 'selected' : ''}>${displayLabel}</option>`;
     });
     productOptions += `<option value="__custom__" ${isCustom && item.description ? 'selected' : ''}>✏️ Custom Item...</option>`;
     let descCell;
@@ -441,7 +443,7 @@ function renderItems() {
       <td><select data-field="unit" ${item.productId ? 'disabled style="opacity:0.6"' : ''}>${UNITS.map(u => `<option value="${u}" ${u === item.unit ? 'selected' : ''}>${u}</option>`).join('')}</select></td>
       <td><input type="number" value="${item.rate}" min="0" step="0.01" data-field="rate" ${item.productId ? 'readonly style="opacity:0.6"' : ''} /></td>
       <td><input type="number" value="${item.discount}" min="0" max="100" step="0.5" data-field="discount" /></td>
-      <td><select data-field="gstRate" ${item.productId ? 'disabled style="opacity:0.6"' : ''}>${GST_RATES.map(r => `<option value="${r}" ${r === item.gstRate ? 'selected' : ''}>${r}%</option>`).join('')}</select></td>
+      <td><input type="number" value="${item.gstRate}" min="0" max="100" step="0.01" data-field="gstRate" ${item.productId ? 'readonly style="opacity:0.6"' : ''} /></td>
       <td class="item-amount">₹${formatNumber(taxableAmt)}</td>
       <td><button class="btn btn-danger btn-remove" title="Remove item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td>
     `;
@@ -580,7 +582,7 @@ async function saveSettings() {
     return;
   }
   
-  if (data.phone && !/^[6-9]\d{9}$/.test(data.phone)) {
+  if (data.phone && !/^\d{10}$/.test(data.phone)) {
     showToast('Business phone number must be a valid 10-digit number.', 'error');
     return;
   }
@@ -605,12 +607,13 @@ let editingProductId = null;
 function showProductForm(product) {
   editingProductId = null;
   $('#productFormTitle').textContent = 'Add New Product';
-  $('#prodDescription').value = ''; $('#prodHsn').value = ''; $('#prodUnit').value = 'Nos'; $('#prodRate').value = ''; $('#prodGst').value = '18';
+  $('#prodDescription').value = ''; $('#prodHsn').value = ''; $('#prodUnit').value = 'Nos'; $('#prodRate').value = ''; $('#prodGst').value = '18'; $('#prodQtyPerUnit').value = '1';
   if (product && typeof product === 'object' && product.id) {
     editingProductId = product.id;
     $('#productFormTitle').textContent = 'Edit Product';
     $('#prodDescription').value = product.description || ''; $('#prodHsn').value = product.hsn_sac || '';
     $('#prodUnit').value = product.unit || 'Nos'; $('#prodRate').value = product.rate || ''; $('#prodGst').value = product.gst_rate ?? 18;
+    $('#prodQtyPerUnit').value = product.qty_per_unit || 1;
   }
   $('#productForm').style.display = 'block';
   $('#prodDescription').focus();
@@ -628,6 +631,7 @@ async function saveProduct() {
     unit: $('#prodUnit').value, 
     rate: parseFloat($('#prodRate').value), 
     gst_rate: parseFloat($('#prodGst').value) || 18,
+    qty_per_unit: parseInt($('#prodQtyPerUnit').value, 10) || 1,
   };
 
   if (!data.description) { showToast('Product description is required', 'error'); return; }
@@ -675,19 +679,22 @@ function renderProductsList() {
     container.innerHTML = '<p class="page-empty-state">No products yet. Add your first product!</p>';
     return;
   }
-  container.innerHTML = products.map(p => `
-    <div class="product-item" data-id="${p.id}">
-      <div class="product-item-info">
-        <div class="product-item-name">${escapeHtml(p.description)}</div>
-        <div class="product-item-meta"><span>HSN: ${p.hsn_sac || '—'}</span><span>${p.unit}</span><span>GST: ${p.gst_rate}%</span></div>
-      </div>
+  container.innerHTML = products.map(p => {
+    const displayLabel = escapeHtml(p.description) + (p.qty_per_unit && p.qty_per_unit > 1 ? ` (${p.qty_per_unit})` : '');
+    return `
+      <div class="product-item" data-id="${p.id}">
+        <div class="product-item-info">
+          <div class="product-item-name">${displayLabel}</div>
+          <div class="product-item-meta"><span>HSN: ${p.hsn_sac || '—'}</span><span>Unit: ${p.unit}</span><span>GST: ${p.gst_rate}%</span></div>
+        </div>
       <div class="product-item-price">₹${formatNumber(p.rate)}</div>
       <div class="product-item-actions">
         <button class="btn btn-ghost btn-edit-prod" data-id="${p.id}" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="btn btn-danger btn-del-prod" data-id="${p.id}" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
   container.querySelectorAll('.btn-edit-prod').forEach(btn => {
     btn.addEventListener('click', () => { const prod = products.find(p => p.id === parseInt(btn.dataset.id)); if (prod) showProductForm(prod); });
   });
@@ -765,7 +772,7 @@ async function saveCustomer() {
     return;
   }
   
-  if (data.phone && !/^[6-9]\d{9}$/.test(data.phone)) {
+  if (data.phone && !/^\d{10}$/.test(data.phone)) {
     showToast('Customer phone number must be a valid 10-digit number.', 'error');
     return;
   }
@@ -896,13 +903,13 @@ async function loadInvoiceFromHistory(id) {
     $('#invoiceNumber').value = inv.invoice_number || '';
     $('#invoiceDate').value = inv.invoice_date || '';
     $('#dueDate').value = inv.due_date || '';
-    $('#placeOfSupply').value = inv.place_of_supply || '';
+    $('#placeOfSupply').value = '29'; // Force Karnataka
     supplyType = inv.supply_type || 'intra';
     setSupplyType(supplyType);
     $('#buyerName').value = inv.buyer_name || '';
     $('#buyerGstin').value = inv.buyer_gstin || '';
     $('#buyerAddress').value = inv.buyer_address || '';
-    $('#buyerState').value = inv.buyer_state || '';
+    $('#buyerState').value = '29'; // Force Karnataka
     $('#buyerPhone').value = inv.buyer_phone || '';
     $('#buyerEmail').value = inv.buyer_email || '';
     if (inv.notes) $('#notes').value = inv.notes;
@@ -910,6 +917,7 @@ async function loadInvoiceFromHistory(id) {
       id: i + 1, productId: '', description: it.description || '', hsn: it.hsn_sac || '',
       qty: it.qty || 1, unit: it.unit || 'Nos', rate: it.rate || 0,
       discount: it.discount_percent || 0, gstRate: it.gst_rate || 18,
+      qtyPerUnit: it.qty_per_unit || 1,
     }));
     nextItemId = items.length + 1;
     renderItems();
@@ -928,8 +936,9 @@ function resetInvoice() {
   supplyType = 'intra';
   setSupplyType('intra');
   $('#buyerName').value = ''; $('#buyerGstin').value = ''; $('#buyerAddress').value = '';
-  $('#buyerState').value = ''; $('#buyerPhone').value = ''; $('#buyerEmail').value = '';
-  $('#placeOfSupply').value = '';
+  $('#buyerState').value = '29'; // Force Karnataka
+  $('#buyerPhone').value = ''; $('#buyerEmail').value = '';
+  $('#placeOfSupply').value = '29'; // Force Karnataka
   setDefaultDates();
   loadNextInvoiceNumber();
   addItem();
@@ -979,7 +988,8 @@ function generateInvoiceHtml() {
       const ig = taxable * (rate / 100);
       gstMap[rate].igst += ig; gstMap[rate].total += ig; totalIgst += ig;
     }
-    return `<tr><td class="text-center">${i + 1}</td><td>${escapeHtml(item.description) || '—'}</td><td class="text-center">${item.hsn || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNumber(item.rate)}</td><td class="text-center">${item.discount}%</td><td class="text-center">${item.gstRate}%</td><td class="text-right">₹${formatNumber(taxable)}</td></tr>`;
+    const descText = escapeHtml(item.description) + (item.qtyPerUnit && item.qtyPerUnit > 1 ? `<br><small style="color:#64748b; font-size:0.75rem;">(Qty/Unit: ${item.qtyPerUnit})</small>` : '');
+    return `<tr><td class="text-center">${i + 1}</td><td>${descText || '—'}</td><td class="text-center">${item.hsn || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNumber(item.rate)}</td><td class="text-center">${item.discount}%</td><td class="text-center">${item.gstRate}%</td><td class="text-right">₹${formatNumber(taxable)}</td></tr>`;
   }).join('');
   const totalTax = supplyType === 'intra' ? totalCgst + totalSgst : totalIgst;
   const grandTotal = taxableTotal + totalTax;
@@ -1072,7 +1082,7 @@ async function saveInvoiceToDb() {
     throw new Error('Invalid Buyer GSTIN');
   }
   
-  if (buyerPhone && !/^[6-9]\d{9}$/.test(buyerPhone)) {
+  if (buyerPhone && !/^\d{10}$/.test(buyerPhone)) {
     showToast('Buyer phone number must be a valid 10-digit number.', 'error');
     throw new Error('Invalid Buyer Phone');
   }
@@ -1113,7 +1123,7 @@ async function saveInvoiceToDb() {
     } else {
       totalIgst += taxable * (item.gstRate / 100);
     }
-    return { description: item.description, hsn_sac: item.hsn, qty: item.qty, unit: item.unit, rate: item.rate, discount_percent: item.discount, gst_rate: item.gstRate, taxable_amount: taxable };
+    return { description: item.description, hsn_sac: item.hsn, qty: item.qty, unit: item.unit, rate: item.rate, discount_percent: item.discount, gst_rate: item.gstRate, taxable_amount: taxable, qty_per_unit: item.qtyPerUnit || 1 };
   });
   const totalTax = supplyType === 'intra' ? totalCgst + totalSgst : totalIgst;
   const grandTotal = taxableTotal + totalTax;
@@ -1386,7 +1396,7 @@ function renderUsersList(usersList) {
             <span class="badge ${statusClass}">${activeText}</span>
           </div>
           <div class="product-item-meta" style="margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem;">
-            <span>Username: @${escapeHtml(u.username)}</span>
+            <span>Username: ${escapeHtml(u.username)}</span>
             <span>Registered: ${formatDateDisplay(u.created_at)}</span>
             ${contactText}
           </div>

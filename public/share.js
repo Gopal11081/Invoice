@@ -56,7 +56,16 @@ function renderInvoice(inv) {
 
   const formatDateDisplay = (dateStr) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr + 'T00:00:00');
+    let d;
+    if (dateStr.includes('T')) {
+      d = new Date(dateStr);
+    } else {
+      d = new Date(dateStr + 'T00:00:00');
+    }
+    if (isNaN(d.getTime())) {
+      d = new Date(dateStr);
+    }
+    if (isNaN(d.getTime())) return 'Invalid Date';
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
@@ -97,7 +106,7 @@ function renderInvoice(inv) {
     state: getStateName(inv.buyer_state), phone: inv.buyer_phone, email: inv.buyer_email
   };
 
-  const supplyType = inv.supply_type || 'intra';
+  const supplyType = 'intra';
 
   let subtotal = 0, totalDiscount = 0, taxableTotal = 0, totalCgst = 0, totalSgst = 0, totalIgst = 0;
   const gstMap = {};
@@ -126,7 +135,8 @@ function renderInvoice(inv) {
       gstMap[rate].total += ig; 
       totalIgst += ig;
     }
-    return `<tr><td class="text-center">${i + 1}</td><td>${escapeHtml(item.description) || '—'}</td><td class="text-center">${item.hsn_sac || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNum(item.rate)}</td><td class="text-center">${item.discount_percent}%</td><td class="text-center">${item.gst_rate}%</td><td class="text-right">₹${formatNum(taxable)}</td></tr>`;
+    const descText = escapeHtml(item.description) + (item.qty_per_unit && item.qty_per_unit > 1 ? `<br><small style="color:#64748b; font-size:0.75rem;">(Qty/Unit: ${item.qty_per_unit})</small>` : '');
+    return `<tr><td class="text-center">${i + 1}</td><td>${descText || '—'}</td><td class="text-center">${item.hsn_sac || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNum(item.rate)}</td><td class="text-center">${item.discount_percent}%</td><td class="text-center">${item.gst_rate}%</td><td class="text-right">₹${formatNum(taxable)}</td></tr>`;
   }).join('');
 
   const totalTax = supplyType === 'intra' ? totalCgst + totalSgst : totalIgst;
