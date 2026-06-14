@@ -1369,13 +1369,13 @@ async function loadUsers() {
 function renderUsersList(usersList) {
   const container = $('#usersList');
   if (!container) return;
-  const filteredList = usersList.filter(u => u.username !== 'admin');
+  const filteredList = usersList.filter(u => u.username !== 'aishu');
   if (filteredList.length === 0) {
     container.innerHTML = '<p class="page-empty-state">No users registered.</p>';
     return;
   }
   container.innerHTML = filteredList.map(u => {
-    const isSelfAdmin = u.username === 'admin';
+    const isSelfAdmin = u.username === 'aishu';
     const activeText = u.is_active ? 'Active' : 'Deactivated';
     const statusClass = u.is_active ? 'badge-active' : 'badge-deactivated';
     

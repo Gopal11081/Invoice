@@ -122,7 +122,7 @@ app.post('/api/auth/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.displayName = user.display_name;
-    req.session.role = user.role || (user.username === 'admin' ? 'admin' : 'staff');
+    req.session.role = user.role || (user.username === 'aishu' ? 'admin' : 'staff');
 
     res.json({
       success: true,
@@ -517,7 +517,7 @@ app.put('/api/admin/users/:id/status', requireAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
     const { is_active } = req.body;
     
-    if (userId === 1 || req.params.id === '1') {
+    if (userId === 1 || userId === 7 || req.params.id === '1' || req.params.id === '7') {
       return res.status(400).json({ error: 'Cannot modify admin user status.' });
     }
     
@@ -533,7 +533,7 @@ app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
     const { role } = req.body;
     
-    if (userId === 1 || req.params.id === '1') {
+    if (userId === 1 || userId === 7 || req.params.id === '1' || req.params.id === '7') {
       return res.status(400).json({ error: 'Cannot modify system admin role.' });
     }
     

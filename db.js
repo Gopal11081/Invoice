@@ -120,12 +120,12 @@ async function ensureInitialized() {
     // Seed default admin user if empty
     const userSnapshot = await db.collection('users').limit(1).get();
     if (userSnapshot.empty) {
-      const hash = bcrypt.hashSync('admin123', 10);
+      const hash = bcrypt.hashSync('aishu123', 10);
       await db.collection('users').doc('1').set({
         id: 1,
-        username: 'admin',
+        username: 'aishu',
         password_hash: hash,
-        display_name: 'Administrator',
+        display_name: 'Aishwaraya Gupta',
         is_active: true,
         role: 'admin',
         created_at: new Date().toISOString()
@@ -680,7 +680,7 @@ async function getAllUsers() {
       email: data.email || '',
       mobile: data.mobile || '',
       is_active: data.is_active === undefined ? true : data.is_active,
-      role: data.role || (data.username === 'admin' ? 'admin' : 'staff'),
+      role: data.role || (data.username === 'aishu' ? 'admin' : 'staff'),
       created_at: data.created_at
     });
   });
