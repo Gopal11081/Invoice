@@ -3,6 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      fetch('/api/public/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, source, lineno, colno, error: error ? error.stack : null })
+      });
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      fetch('/api/public/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: event.reason ? event.reason.message : 'Unhandled rejection', error: event.reason ? event.reason.stack : null })
+      });
+    });
+  </script>
   <title>GST Invoice Generator — Professional Billing Made Easy</title>
   <meta name="description" content="Generate professional GST-compliant invoices with automatic CGST, SGST, and IGST calculations. Free, fast, and beautiful." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />

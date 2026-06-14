@@ -4,9 +4,8 @@
    ============================================ */
 
 const express = require('express');
-const session = require('express-session');
+const session = require('cookie-session');
 const path = require('path');
-const crypto = require('crypto');
 const db = require('./db');
 
 const app = express();
@@ -15,16 +14,11 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
-// Session setup
+// Session setup (Stateless Cookie Session for Serverless compatibility)
 app.use(session({
-  secret: crypto.randomBytes(32).toString('hex'),
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: false, // set true in production with HTTPS
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
+  name: 'invoice-gst-session',
+  keys: [process.env.SESSION_SECRET || 'invoice-gst-session-secret-key-12345'],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
 // ===== STATIC FILES (publicly accessible) =====
@@ -93,11 +87,8 @@ app.post('/api/auth/login', async (req, res) => {
 
 // POST /api/auth/logout
 app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) return res.status(500).json({ error: 'Logout failed' });
-    res.clearCookie('connect.sid');
-    res.json({ success: true });
-  });
+  req.session = null;
+  res.json({ success: true });
 });
 
 // GET /api/auth/check — check if user is authenticated
@@ -114,6 +105,12 @@ app.get('/api/auth/check', (req, res) => {
 // GET /api/public/debug-db — debug endpoint to verify Firestore connection status
 app.get('/api/public/debug-db', async (req, res) => {
   res.json(await db.getInitStatus());
+});
+
+// POST /api/public/log-error — frontend error logging
+app.post('/api/public/log-error', (req, res) => {
+  console.log('\n🔴 [FRONTEND ERROR]:', JSON.stringify(req.body, null, 2), '\n');
+  res.sendStatus(200);
 });
 
 // ===== AUTH MIDDLEWARE — Protect everything below =====
