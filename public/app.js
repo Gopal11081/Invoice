@@ -65,18 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     currentUser = auth.user;
-    const name = currentUser.display_name || currentUser.username;
-    $('#sidebarUserName').textContent = name;
-    $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
-    
-    const link = $('#sidebarLinkUsers');
-    if (link) {
-      if (currentUser.username === 'admin') {
-        link.style.display = 'flex';
-      } else {
-        link.style.display = 'none';
-      }
-    }
+    updateSidebarAndAccessControls();
   } catch (e) {
     window.location.href = '/login';
     return;
@@ -99,23 +88,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ===== AUTH =====
+function updateSidebarAndAccessControls() {
+  if (!currentUser) return;
+  const name = currentUser.display_name || currentUser.username;
+  $('#sidebarUserName').textContent = name;
+  $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
+  
+  const roleDisplay = currentUser.role === 'admin' ? 'Administrator' : 'Staff';
+  const roleEl = $('#sidebarUserRole');
+  if (roleEl) roleEl.textContent = roleDisplay;
+
+  const isAdmin = currentUser.role === 'admin';
+  
+  const usersLink = $('#sidebarLinkUsers');
+  if (usersLink) usersLink.style.display = isAdmin ? 'flex' : 'none';
+
+  const settingsLink = $('#sidebarLinkSettings');
+  if (settingsLink) settingsLink.style.display = isAdmin ? 'flex' : 'none';
+
+  const editSettingsBtn = $('#btnEditSettings');
+  if (editSettingsBtn) editSettingsBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+}
+
 async function loadCurrentUser() {
   try {
     const data = await api('/api/auth/check');
     if (data.authenticated && data.user) {
       currentUser = data.user;
-      const name = data.user.display_name || data.user.username;
-      $('#sidebarUserName').textContent = name;
-      $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
-      
-      const link = $('#sidebarLinkUsers');
-      if (link) {
-        if (data.user.username === 'admin') {
-          link.style.display = 'flex';
-        } else {
-          link.style.display = 'none';
-        }
-      }
+      updateSidebarAndAccessControls();
     }
   } catch (e) { /* redirect handled by api() */ }
 }
@@ -143,8 +143,8 @@ function navigateTo(page) {
   const validPages = ['dashboard', 'invoice', 'history', 'products', 'customers', 'settings', 'users'];
   if (!validPages.includes(page)) page = 'dashboard';
 
-  // Guard users page (admin only)
-  if (page === 'users' && (!currentUser || currentUser.username !== 'admin')) {
+  // Guard users and settings page (admin only)
+  if ((page === 'users' || page === 'settings') && (!currentUser || currentUser.role !== 'admin')) {
     page = 'dashboard';
     window.location.hash = '#/dashboard';
   }
@@ -1369,30 +1369,46 @@ async function loadUsers() {
 function renderUsersList(usersList) {
   const container = $('#usersList');
   if (!container) return;
-  if (usersList.length === 0) {
+  const filteredList = usersList.filter(u => u.username !== 'admin');
+  if (filteredList.length === 0) {
     container.innerHTML = '<p class="page-empty-state">No users registered.</p>';
     return;
   }
-  container.innerHTML = usersList.map(u => {
+  container.innerHTML = filteredList.map(u => {
     const isSelfAdmin = u.username === 'admin';
     const activeText = u.is_active ? 'Active' : 'Deactivated';
     const statusClass = u.is_active ? 'badge-active' : 'badge-deactivated';
-    const actionButton = isSelfAdmin 
-      ? `<span class="badge badge-seller">System Admin</span>`
-      : `<button class="btn btn-sm ${u.is_active ? 'btn-outline' : 'btn-primary'} btn-toggle-status" data-id="${u.id}" data-active="${u.is_active}">
-          ${u.is_active ? 'Deactivate' : 'Activate'}
-         </button>`;
+    
+    let roleActionHtml = '';
+    if (isSelfAdmin) {
+      roleActionHtml = `<span class="badge badge-seller" style="font-weight: 600;">System Admin</span>`;
+    } else {
+      roleActionHtml = `
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <select class="role-select" data-id="${u.id}" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); padding: 0.25rem 0.5rem; border-radius: 6px; outline: none; cursor: pointer; font-size: 13px;">
+            <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>
+            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+          <button class="btn btn-sm ${u.is_active ? 'btn-outline' : 'btn-primary'} btn-toggle-status" data-id="${u.id}" data-active="${u.is_active}">
+            ${u.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
+      `;
+    }
          
     const contacts = [];
     if (u.email) contacts.push(`Email: ${escapeHtml(u.email)}`);
     if (u.mobile) contacts.push(`Mobile: ${escapeHtml(u.mobile)}`);
     const contactText = contacts.length > 0 ? `<span>${contacts.join(' · ')}</span>` : '';
+    const displayRoleLabel = u.role === 'admin' ? 'Admin' : 'Staff';
+    const roleBadgeClass = u.role === 'admin' ? 'badge-seller' : 'badge-buyer';
 
     return `
       <div class="product-item" data-id="${u.id}">
         <div class="product-item-info">
           <div class="product-item-name" style="display: flex; align-items: center; gap: 0.75rem;">
             ${escapeHtml(u.display_name)} 
+            <span class="badge ${roleBadgeClass}">${displayRoleLabel}</span>
             <span class="badge ${statusClass}">${activeText}</span>
           </div>
           <div class="product-item-meta" style="margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem;">
@@ -1402,7 +1418,7 @@ function renderUsersList(usersList) {
           </div>
         </div>
         <div class="product-item-actions">
-          ${actionButton}
+          ${roleActionHtml}
         </div>
       </div>
     `;
@@ -1415,6 +1431,27 @@ function renderUsersList(usersList) {
       await toggleUserStatus(userId, currentStatus);
     });
   });
+
+  container.querySelectorAll('.role-select').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const userId = parseInt(sel.dataset.id);
+      const newRole = e.target.value;
+      await updateUserRole(userId, newRole);
+    });
+  });
+}
+
+async function updateUserRole(userId, role) {
+  try {
+    await api(`/api/admin/users/${userId}/role`, {
+      method: 'PUT',
+      body: { role }
+    });
+    showToast('User role updated successfully!', 'success');
+    await loadUsers();
+  } catch (e) {
+    showToast('Failed to update user role: ' + e.message, 'error');
+  }
 }
 
 async function toggleUserStatus(userId, currentStatus) {

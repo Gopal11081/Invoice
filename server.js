@@ -3,13 +3,40 @@
    With Session-Based Authentication & Firestore
    ============================================ */
 
+require('dotenv').config();
+
 const express = require('express');
 const session = require('cookie-session');
 const path = require('path');
 const db = require('./db');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Setup Nodemailer Transporter
+const smtpHost = process.env.SMTP_HOST;
+const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+const smtpUser = process.env.SMTP_USER;
+const smtpPass = process.env.SMTP_PASS;
+const smtpFrom = process.env.SMTP_FROM || smtpUser;
+
+let transporter = null;
+if (smtpHost && smtpUser && smtpPass) {
+  transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass
+    }
+  });
+  console.log(`✉️ Nodemailer SMTP transporter initialized with host: ${smtpHost}`);
+} else {
+  console.log(`⚠️ SMTP environment variables not configured. Reset links will be logged to the server console.`);
+}
 
 // Middleware
 app.use(express.json());
@@ -59,6 +86,12 @@ app.get('/share.css', (req, res) => {
 app.get('/share.js', (req, res) => {
   sendPublicFile(res, 'share.js');
 });
+app.get(['/forgot-password', '/forgot-password.html'], (req, res) => {
+  sendPublicFile(res, 'forgot-password.html');
+});
+app.get(['/reset-password', '/reset-password.html'], (req, res) => {
+  sendPublicFile(res, 'reset-password.html');
+});
 
 // ===== AUTH ROUTES (public — no auth required) =====
 
@@ -89,10 +122,11 @@ app.post('/api/auth/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.displayName = user.display_name;
+    req.session.role = user.role || (user.username === 'admin' ? 'admin' : 'staff');
 
     res.json({
       success: true,
-      user: { id: user.id, username: user.username, display_name: user.display_name },
+      user: { id: user.id, username: user.username, display_name: user.display_name, role: req.session.role },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -136,6 +170,13 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Username is already taken' });
     }
 
+    if (email) {
+      const existingEmail = await db.getUserByEmail(email);
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email address is already registered' });
+      }
+    }
+
     const newUser = await db.registerUser({ username, password, display_name, email, mobile: normalizedMobile });
     res.status(201).json({
       success: true,
@@ -158,7 +199,7 @@ app.get('/api/auth/check', (req, res) => {
   if (req.session && req.session.userId) {
     return res.json({
       authenticated: true,
-      user: { id: req.session.userId, username: req.session.username, display_name: req.session.displayName },
+      user: { id: req.session.userId, username: req.session.username, display_name: req.session.displayName, role: req.session.role },
     });
   }
   res.json({ authenticated: false });
@@ -173,6 +214,96 @@ app.get('/api/public/debug-db', async (req, res) => {
 app.post('/api/public/log-error', (req, res) => {
   console.log('\n🔴 [FRONTEND ERROR]:', JSON.stringify(req.body, null, 2), '\n');
   res.sendStatus(200);
+});
+
+// ===== PASSWORD RESET PUBLIC APIS =====
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email address is required' });
+  }
+
+  try {
+    const user = await db.getUserByEmail(email);
+    if (!user) {
+      return res.status(400).json({ error: 'No user account found with that email address' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await db.saveResetToken(user.id, token, expiry);
+
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const resetUrl = `${protocol}://${host}/reset-password.html?token=${token}&email=${encodeURIComponent(user.email)}`;
+
+    console.log(`\n🔑 [PASSWORD RESET LINK FOR ${user.username}]: ${resetUrl}\n`);
+
+    let emailSent = false;
+    if (transporter) {
+      const mailOptions = {
+        from: `"InvoiceGST Support" <${smtpFrom}>`,
+        to: user.email,
+        subject: 'Reset your InvoiceGST Password',
+        html: `
+          <div style="font-family: 'Inter', sans-serif; background: #0f172a; color: #f1f5f9; padding: 2.5rem 2rem; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid rgba(148, 163, 184, 0.1);">
+            <h2 style="color: #38bdf8; margin-bottom: 1.5rem; text-align: center;">Reset your Password</h2>
+            <p>Hi ${user.display_name || user.username},</p>
+            <p>We received a request to reset the password for your InvoiceGST account. Click the button below to set a new password. This link is valid for 15 minutes.</p>
+            <div style="text-align: center; margin: 2rem 0;">
+              <a href="${resetUrl}" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); color: white; text-decoration: none; padding: 0.85rem 2rem; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 16px rgba(99,102,241,0.3);">Reset Password</a>
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b;">If you did not request this, please ignore this email.</p>
+            <hr style="border: 0; border-top: 1px solid rgba(148, 163, 184, 0.1); margin: 2rem 0;" />
+            <p style="font-size: 0.75rem; color: #64748b; text-align: center;">InvoiceGST Professional Billing System</p>
+          </div>
+        `
+      };
+      await transporter.sendMail(mailOptions);
+      emailSent = true;
+    }
+
+    res.json({
+      success: true,
+      message: emailSent
+        ? 'A password reset link has been sent to your registered email address.'
+        : 'Password reset link generated. (Check server logs in development)',
+      debugUrl: transporter ? null : resetUrl
+    });
+  } catch (err) {
+    console.error('Error in forgot-password:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { email, token, password } = req.body;
+
+  if (!email || !token || !password) {
+    return res.status(400).json({ error: 'Email, token and new password are required' });
+  }
+
+  if (password.length < 4) {
+    return res.status(400).json({ error: 'Password must be at least 4 characters' });
+  }
+
+  try {
+    const isValid = await db.validateResetToken(email, token);
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    await db.resetUserPassword(email, password);
+    res.json({
+      success: true,
+      message: 'Password reset successful! You can now log in with your new password.'
+    });
+  } catch (err) {
+    console.error('Error in reset-password:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ===== AUTH MIDDLEWARE — Protect everything below =====
@@ -231,7 +362,7 @@ app.get('/api/business', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/business', async (req, res) => {
+app.put('/api/business', requireAdmin, async (req, res) => {
   try {
     await db.updateBusinessConfig(req.body);
     res.json(await db.getBusinessConfig());
@@ -367,7 +498,7 @@ app.get('/api/public/invoices/:token', async (req, res) => {
 
 // ===== ADMIN USER CONTROL ROUTES =====
 function requireAdmin(req, res, next) {
-  if (req.session && req.session.username === 'admin') {
+  if (req.session && req.session.role === 'admin') {
     return next();
   }
   return res.status(403).json({ error: 'Access denied. Administrator privileges required.' });
@@ -392,6 +523,26 @@ app.put('/api/admin/users/:id/status', requireAdmin, async (req, res) => {
     
     await db.updateUserStatus(userId, is_active);
     res.json({ success: true, message: 'User status updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { role } = req.body;
+    
+    if (userId === 1 || req.params.id === '1') {
+      return res.status(400).json({ error: 'Cannot modify system admin role.' });
+    }
+    
+    if (role !== 'admin' && role !== 'staff') {
+      return res.status(400).json({ error: 'Invalid role.' });
+    }
+    
+    await db.updateUserRole(userId, role);
+    res.json({ success: true, message: 'User role updated successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

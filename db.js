@@ -127,6 +127,7 @@ async function ensureInitialized() {
         password_hash: hash,
         display_name: 'Administrator',
         is_active: true,
+        role: 'admin',
         created_at: new Date().toISOString()
       });
       await db.collection('counters').doc('users').set({ current: 1 });
@@ -592,7 +593,17 @@ async function getDashboardData() {
 // ===== USERS / AUTH =====
 async function getUserByUsername(username) {
   await ensureInitialized();
-  const snapshot = await db.collection('users').where('username', '==', username).limit(1).get();
+  const cleanUsername = (username || '').toLowerCase().trim();
+  const snapshot = await db.collection('users').where('username', '==', cleanUsername).limit(1).get();
+  if (snapshot.empty) return null;
+  return snapshot.docs[0].data();
+}
+
+async function getUserByEmail(email) {
+  await ensureInitialized();
+  const cleanEmail = (email || '').toLowerCase().trim();
+  if (!cleanEmail) return null;
+  const snapshot = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
   if (snapshot.empty) return null;
   return snapshot.docs[0].data();
 }
@@ -605,6 +616,37 @@ async function changePassword(userId, newPassword) {
   await ensureInitialized();
   const hash = bcrypt.hashSync(newPassword, 10);
   await db.collection('users').doc(userId.toString()).update({ password_hash: hash });
+}
+
+async function saveResetToken(userId, token, expiry) {
+  await ensureInitialized();
+  await db.collection('users').doc(userId.toString()).update({
+    reset_token: token,
+    reset_token_expiry: expiry.toISOString()
+  });
+}
+
+async function validateResetToken(email, token) {
+  await ensureInitialized();
+  const user = await getUserByEmail(email);
+  if (!user) return false;
+  if (!user.reset_token || user.reset_token !== token) return false;
+  if (!user.reset_token_expiry) return false;
+  const expiry = new Date(user.reset_token_expiry);
+  if (expiry < new Date()) return false;
+  return true;
+}
+
+async function resetUserPassword(email, newPassword) {
+  await ensureInitialized();
+  const user = await getUserByEmail(email);
+  if (!user) throw new Error('User not found');
+  const hash = bcrypt.hashSync(newPassword, 10);
+  await db.collection('users').doc(user.id.toString()).update({
+    password_hash: hash,
+    reset_token: admin.firestore.FieldValue.delete(),
+    reset_token_expiry: admin.firestore.FieldValue.delete()
+  });
 }
 
 async function registerUser(data) {
@@ -638,6 +680,7 @@ async function getAllUsers() {
       email: data.email || '',
       mobile: data.mobile || '',
       is_active: data.is_active === undefined ? true : data.is_active,
+      role: data.role || (data.username === 'admin' ? 'admin' : 'staff'),
       created_at: data.created_at
     });
   });
@@ -649,6 +692,13 @@ async function updateUserStatus(userId, isActive) {
   await ensureInitialized();
   await db.collection('users').doc(userId.toString()).update({
     is_active: isActive
+  });
+}
+
+async function updateUserRole(userId, role) {
+  await ensureInitialized();
+  await db.collection('users').doc(userId.toString()).update({
+    role: role
   });
 }
 
@@ -773,11 +823,16 @@ module.exports = {
   deleteInvoice,
   getDashboardData,
   getUserByUsername,
+  getUserByEmail,
   verifyPassword,
   changePassword,
+  saveResetToken,
+  validateResetToken,
+  resetUserPassword,
   registerUser,
   getAllUsers,
   updateUserStatus,
+  updateUserRole,
   getInvoiceByShareToken,
   generateShareToken,
   getCustomers,

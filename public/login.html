@@ -54,9 +54,12 @@
           <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" autofocus required />
         </div>
         <div class="login-field">
-          <label for="loginPassword">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            Password
+          <label for="loginPassword" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span style="display: flex; align-items: center; gap: 0.4rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Password
+            </span>
+            <a href="/forgot-password" style="color: var(--accent-blue); text-decoration: none; font-size: 0.75rem; text-transform: none; letter-spacing: normal; font-weight: 500;">Forgot?</a>
           </label>
           <div class="password-wrapper">
             <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" required />
