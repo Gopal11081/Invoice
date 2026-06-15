@@ -15,6 +15,9 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy (Vercel) to support secure cookies over HTTPS
+app.set('trust proxy', 1);
+
 // Setup Nodemailer Transporter
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = parseInt(process.env.SMTP_PORT || '587');
