@@ -132,6 +132,36 @@ async function ensureInitialized() {
       });
       await db.collection('counters').doc('users').set({ current: 1 });
       console.log('  ✅ Seeded default admin user');
+    } else {
+      // Ensure 'aishu' admin exists or migrate from 'admin'
+      const aishuSnapshot = await db.collection('users').where('username', '==', 'aishu').limit(1).get();
+      if (aishuSnapshot.empty) {
+        const adminSnapshot = await db.collection('users').where('username', '==', 'admin').limit(1).get();
+        if (!adminSnapshot.empty) {
+          const adminDoc = adminSnapshot.docs[0];
+          const hash = bcrypt.hashSync('aishu123', 10);
+          await adminDoc.ref.update({
+            username: 'aishu',
+            password_hash: hash,
+            display_name: 'Aishwaraya Gupta',
+            role: 'admin'
+          });
+          console.log('  🔄 Migrated default admin user from admin to aishu');
+        } else {
+          // If no admin and no aishu, seed aishu
+          const hash = bcrypt.hashSync('aishu123', 10);
+          await db.collection('users').doc('1').set({
+            id: 1,
+            username: 'aishu',
+            password_hash: hash,
+            display_name: 'Aishwaraya Gupta',
+            is_active: true,
+            role: 'admin',
+            created_at: new Date().toISOString()
+          });
+          console.log('  ✅ Seeded missing default admin user aishu');
+        }
+      }
     }
 
     // Seed products if empty

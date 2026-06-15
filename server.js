@@ -550,9 +550,22 @@ app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
 
 // ===== START SERVER =====
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`\n  ✨ InvoiceGST Server running at http://localhost:${PORT}\n`);
-  });
+  const startServer = (port) => {
+    const server = app.listen(port, () => {
+      console.log(`\n  ✨ InvoiceGST Server running at http://localhost:${port}\n`);
+    });
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⚠️ Port ${port} is already in use. Trying fallback port ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        console.error('Server error:', err);
+      }
+    });
+  };
+  
+  startServer(PORT);
 }
 
 // Expose the Express app as a Firebase Cloud Function (2nd Gen)
