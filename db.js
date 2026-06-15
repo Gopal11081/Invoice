@@ -824,6 +824,17 @@ async function upsertCustomerFromInvoice(data) {
   }
 }
 
+async function getDetailedInvoices() {
+  await ensureInitialized();
+  const snapshot = await db.collection('invoices').get();
+  const list = [];
+  snapshot.forEach(doc => {
+    list.push(doc.data());
+  });
+  list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return list;
+}
+
 async function getInitStatus() {
   const status = { ...initStatus };
   try {
@@ -871,5 +882,6 @@ module.exports = {
   updateCustomer,
   deleteCustomer,
   upsertCustomerFromInvoice,
+  getDetailedInvoices,
   getInitStatus,
 };

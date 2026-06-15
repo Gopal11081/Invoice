@@ -380,7 +380,7 @@ app.get('/api/products', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', requireStaffOrAdmin, async (req, res) => {
   try {
     const product = await db.addProduct(req.body);
     res.status(201).json(product);
@@ -388,7 +388,7 @@ app.post('/api/products', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', requireStaffOrAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     await db.updateProduct(id, req.body);
@@ -397,7 +397,7 @@ app.put('/api/products/:id', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', requireStaffOrAdmin, async (req, res) => {
   try {
     await db.deleteProduct(parseInt(req.params.id));
     res.json({ success: true });
@@ -420,14 +420,14 @@ app.get('/api/customers/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/customers', async (req, res) => {
+app.post('/api/customers', requireStaffOrAdmin, async (req, res) => {
   try {
     const customer = await db.addCustomer(req.body);
     res.status(201).json(customer);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/customers/:id', async (req, res) => {
+app.put('/api/customers/:id', requireStaffOrAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     await db.updateCustomer(id, req.body);
@@ -435,7 +435,7 @@ app.put('/api/customers/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/customers/:id', async (req, res) => {
+app.delete('/api/customers/:id', requireStaffOrAdmin, async (req, res) => {
   try {
     await db.deleteCustomer(parseInt(req.params.id));
     res.json({ success: true });
@@ -444,7 +444,7 @@ app.delete('/api/customers/:id', async (req, res) => {
 
 // ===== DASHBOARD ROUTE =====
 
-app.get('/api/dashboard', async (req, res) => {
+app.get('/api/dashboard', requireStaffOrAdmin, async (req, res) => {
   try { res.json(await db.getDashboardData()); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -469,12 +469,12 @@ app.get('/api/invoices/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/invoices', async (req, res) => {
+app.post('/api/invoices', requireStaffOrAdmin, async (req, res) => {
   try { res.status(201).json(await db.saveInvoice(req.body)); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/invoices/:id', async (req, res) => {
+app.delete('/api/invoices/:id', requireStaffOrAdmin, async (req, res) => {
   try {
     await db.deleteInvoice(parseInt(req.params.id));
     res.json({ success: true });
@@ -483,7 +483,7 @@ app.delete('/api/invoices/:id', async (req, res) => {
 });
 
 // ===== SHARING ROUTES =====
-app.post('/api/invoices/:id/share', async (req, res) => {
+app.post('/api/invoices/:id/share', requireStaffOrAdmin, async (req, res) => {
   try {
     const token = await db.generateShareToken(parseInt(req.params.id));
     if (!token) return res.status(404).json({ error: 'Invoice not found' });
@@ -497,6 +497,30 @@ app.get('/api/public/invoices/:token', async (req, res) => {
     if (!invoice) return res.status(404).json({ error: 'Invoice not found or link expired' });
     res.json(invoice);
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== CA / AUDIT ROUTES =====
+function requireCAOrAdmin(req, res, next) {
+  if (req.session && (req.session.role === 'admin' || req.session.role === 'ca')) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Access denied. CA or Administrator privileges required.' });
+}
+
+function requireStaffOrAdmin(req, res, next) {
+  if (req.session && (req.session.role === 'admin' || req.session.role === 'staff')) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Access denied. Staff or Administrator privileges required.' });
+}
+
+app.get('/api/ca/gst-report', requireCAOrAdmin, async (req, res) => {
+  try {
+    const list = await db.getDetailedInvoices();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ===== ADMIN USER CONTROL ROUTES =====
@@ -540,7 +564,7 @@ app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Cannot modify system admin role.' });
     }
     
-    if (role !== 'admin' && role !== 'staff') {
+    if (role !== 'admin' && role !== 'staff' && role !== 'ca') {
       return res.status(400).json({ error: 'Invalid role.' });
     }
     

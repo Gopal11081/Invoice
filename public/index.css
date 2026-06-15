@@ -476,3 +476,21 @@ select { cursor:pointer; appearance:none; background-image:url("data:image/svg+x
   #invoicePreview { position:absolute; left:0; top:0; width:100%; padding:20px; box-shadow:none; border:none; background:#fff; }
   .sidebar, .mobile-header, .toast-container, .modal-header { display:none !important; }
 }
+
+/* ===== CA DASHBOARD STYLES ===== */
+@media (max-width: 1200px) {
+  #caKpiGrid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+@media (max-width: 768px) {
+  #caKpiGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 480px) {
+  #caKpiGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

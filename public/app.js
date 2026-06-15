@@ -94,17 +94,47 @@ function updateSidebarAndAccessControls() {
   $('#sidebarUserName').textContent = name;
   $('#sidebarUserAvatar').textContent = (name.charAt(0) || 'U').toUpperCase();
 
-  const roleDisplay = currentUser.role === 'admin' ? 'Administrator' : 'Staff';
+  const isCA = currentUser.role === 'ca';
+  const isAdmin = currentUser.role === 'admin';
+
+  let roleDisplay = 'Staff';
+  if (isAdmin) roleDisplay = 'Administrator';
+  else if (isCA) roleDisplay = 'CA (Auditor)';
+
   const roleEl = $('#sidebarUserRole');
   if (roleEl) roleEl.textContent = roleDisplay;
 
-  const isAdmin = currentUser.role === 'admin';
+  // Dashboard link
+  const dashboardLink = $('[data-page="dashboard"]');
+  if (dashboardLink) dashboardLink.style.display = !isCA ? 'flex' : 'none';
 
+  // History link
+  const historyLink = $('[data-page="history"]');
+  if (historyLink) historyLink.style.display = !isCA ? 'flex' : 'none';
+
+  // New Invoice link
+  const newInvoiceLink = $('[data-page="invoice"]');
+  if (newInvoiceLink) newInvoiceLink.style.display = !isCA ? 'flex' : 'none';
+
+  // Products link
+  const productsLink = $('[data-page="products"]');
+  if (productsLink) productsLink.style.display = !isCA ? 'flex' : 'none';
+
+  // Customers link
+  const customersLink = $('[data-page="customers"]');
+  if (customersLink) customersLink.style.display = !isCA ? 'flex' : 'none';
+
+  // Settings link
+  const settingsLink = $('#sidebarLinkSettings');
+  if (settingsLink) settingsLink.style.display = isAdmin ? 'flex' : 'none';
+
+  // Users link
   const usersLink = $('#sidebarLinkUsers');
   if (usersLink) usersLink.style.display = isAdmin ? 'flex' : 'none';
 
-  const settingsLink = $('#sidebarLinkSettings');
-  if (settingsLink) settingsLink.style.display = isAdmin ? 'flex' : 'none';
+  // CA Dashboard link
+  const caLink = $('#sidebarLinkCA');
+  if (caLink) caLink.style.display = (isAdmin || isCA) ? 'flex' : 'none';
 
   const editSettingsBtn = $('#btnEditSettings');
   if (editSettingsBtn) editSettingsBtn.style.display = isAdmin ? 'inline-flex' : 'none';
@@ -140,11 +170,29 @@ function handleRoute() {
 }
 
 function navigateTo(page) {
-  const validPages = ['dashboard', 'invoice', 'history', 'products', 'customers', 'settings', 'users'];
+  const validPages = ['dashboard', 'invoice', 'history', 'products', 'customers', 'settings', 'users', 'ca-dashboard'];
   if (!validPages.includes(page)) page = 'dashboard';
 
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isCA = currentUser && currentUser.role === 'ca';
+
+  // Guard CA-only access: CA can only access CA dashboard
+  if (isCA) {
+    const allowedCAPages = ['ca-dashboard'];
+    if (!allowedCAPages.includes(page)) {
+      page = 'ca-dashboard';
+      window.location.hash = '#/ca-dashboard';
+    }
+  }
+
   // Guard users and settings page (admin only)
-  if ((page === 'users' || page === 'settings') && (!currentUser || currentUser.role !== 'admin')) {
+  if ((page === 'users' || page === 'settings') && !isAdmin) {
+    page = isCA ? 'ca-dashboard' : 'dashboard';
+    window.location.hash = isCA ? '#/ca-dashboard' : '#/dashboard';
+  }
+
+  // Guard CA dashboard (admin and ca only)
+  if (page === 'ca-dashboard' && !isAdmin && !isCA) {
     page = 'dashboard';
     window.location.hash = '#/dashboard';
   }
@@ -153,7 +201,9 @@ function navigateTo(page) {
 
   // Update pages
   $$('.page').forEach(p => p.classList.remove('active'));
-  const pageEl = $(`#page${page.charAt(0).toUpperCase() + page.slice(1)}`);
+  let pageId = `page${page.charAt(0).toUpperCase() + page.slice(1)}`;
+  if (page === 'ca-dashboard') pageId = 'pageCaDashboard';
+  const pageEl = $(`#${pageId}`);
   if (pageEl) pageEl.classList.add('active');
 
   // Update sidebar links
@@ -171,6 +221,7 @@ function navigateTo(page) {
   if (page === 'customers') { hideCustomerForm(); renderCustomersList(); }
   if (page === 'settings') populateSettingsForm();
   if (page === 'users') loadUsers();
+  if (page === 'ca-dashboard') loadCaDashboard();
 }
 
 // ===== MOBILE SIDEBAR =====
@@ -858,6 +909,7 @@ function renderHistoryList(invoices) {
     container.innerHTML = '<p class="page-empty-state">No invoices generated yet.<br>Create your first invoice!</p>';
     return;
   }
+  const isCA = currentUser && currentUser.role === 'ca';
   container.innerHTML = invoices.map(inv => `
     <div class="history-item" data-id="${inv.id}">
       <div class="history-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
@@ -868,14 +920,18 @@ function renderHistoryList(invoices) {
       <div class="history-item-amount">₹${formatNumber(inv.grand_total || 0)}</div>
       <div class="history-item-actions">
         <button class="btn-share-invoice-hist" data-id="${inv.id}" title="Share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
-        <button class="btn btn-danger btn-del-invoice" data-id="${inv.id}" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+        ${isCA ? '' : `<button class="btn btn-danger btn-del-invoice" data-id="${inv.id}" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>`}
       </div>
     </div>
   `).join('');
   container.querySelectorAll('.history-item').forEach(row => {
     row.addEventListener('click', (e) => {
       if (e.target.closest('.btn-del-invoice') || e.target.closest('.btn-share-invoice-hist')) return;
-      loadInvoiceFromHistory(parseInt(row.dataset.id));
+      if (isCA) {
+        loadInvoiceFromHistory(parseInt(row.dataset.id), true);
+      } else {
+        loadInvoiceFromHistory(parseInt(row.dataset.id), false);
+      }
     });
   });
   container.querySelectorAll('.btn-share-invoice-hist').forEach(btn => {
@@ -884,20 +940,22 @@ function renderHistoryList(invoices) {
       handleShareAction(parseInt(btn.dataset.id));
     });
   });
-  container.querySelectorAll('.btn-del-invoice').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (!confirm('Delete this invoice?')) return;
-      try {
-        await api(`/api/invoices/${btn.dataset.id}`, { method: 'DELETE' });
-        showToast('Invoice deleted', 'success');
-        loadHistory();
-      } catch (err) { showToast('Failed to delete invoice', 'error'); }
+  if (!isCA) {
+    container.querySelectorAll('.btn-del-invoice').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('Delete this invoice?')) return;
+        try {
+          await api(`/api/invoices/${btn.dataset.id}`, { method: 'DELETE' });
+          showToast('Invoice deleted', 'success');
+          loadHistory();
+        } catch (err) { showToast('Failed to delete invoice', 'error'); }
+      });
     });
-  });
+  }
 }
 
-async function loadInvoiceFromHistory(id) {
+async function loadInvoiceFromHistory(id, shouldPreview = false) {
   try {
     const inv = await api(`/api/invoices/${id}`);
     $('#invoiceNumber').value = inv.invoice_number || '';
@@ -922,8 +980,12 @@ async function loadInvoiceFromHistory(id) {
     nextItemId = items.length + 1;
     renderItems();
     recalculate();
-    window.location.hash = '#/invoice';
-    showToast(`Loaded ${inv.invoice_number}`, 'success');
+    if (shouldPreview) {
+      openPreview();
+    } else {
+      window.location.hash = '#/invoice';
+      showToast(`Loaded ${inv.invoice_number}`, 'success');
+    }
   } catch (e) {
     showToast('Failed to load invoice', 'error');
   }
@@ -1390,6 +1452,7 @@ function renderUsersList(usersList) {
           <select class="role-select" data-id="${u.id}" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); padding: 0.25rem 0.5rem; border-radius: 6px; outline: none; cursor: pointer; font-size: 13px;">
             <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>
             <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+            <option value="ca" ${u.role === 'ca' ? 'selected' : ''}>CA</option>
           </select>
           <button class="btn btn-sm ${u.is_active ? 'btn-outline' : 'btn-primary'} btn-toggle-status" data-id="${u.id}" data-active="${u.is_active}">
             ${u.is_active ? 'Deactivate' : 'Activate'}
@@ -1402,8 +1465,16 @@ function renderUsersList(usersList) {
     if (u.email) contacts.push(`Email: ${escapeHtml(u.email)}`);
     if (u.mobile) contacts.push(`Mobile: ${escapeHtml(u.mobile)}`);
     const contactText = contacts.length > 0 ? `<span>${contacts.join(' · ')}</span>` : '';
-    const displayRoleLabel = u.role === 'admin' ? 'Admin' : 'Staff';
-    const roleBadgeClass = u.role === 'admin' ? 'badge-seller' : 'badge-buyer';
+
+    let displayRoleLabel = 'Staff';
+    let roleBadgeClass = 'badge-buyer';
+    if (u.role === 'admin') {
+      displayRoleLabel = 'Admin';
+      roleBadgeClass = 'badge-seller';
+    } else if (u.role === 'ca') {
+      displayRoleLabel = 'CA';
+      roleBadgeClass = 'badge-codes';
+    }
 
     return `
       <div class="product-item" data-id="${u.id}">
@@ -1493,3 +1564,294 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+// ===== CA DASHBOARD SYSTEM =====
+let caInvoices = [];
+let caDashboardInitialized = false;
+
+async function loadCaDashboard() {
+  try {
+    caInvoices = await api('/api/ca/gst-report');
+    
+    if (!caDashboardInitialized) {
+      initCaFilters();
+      bindCaEvents();
+      caDashboardInitialized = true;
+    }
+    
+    applyCaFiltersAndRender();
+  } catch (e) {
+    console.error('CA Dashboard error:', e);
+    showToast('Failed to load CA dashboard data: ' + e.message, 'error');
+  }
+}
+
+function initCaFilters() {
+  const today = new Date();
+  
+  // Default to current month
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  $('#caStartDate').value = formatDateISO(start);
+  $('#caEndDate').value = formatDateISO(end);
+}
+
+function bindCaEvents() {
+  $('#btnCaFilterThisMonth').addEventListener('click', () => {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    $('#caStartDate').value = formatDateISO(start);
+    $('#caEndDate').value = formatDateISO(end);
+    applyCaFiltersAndRender();
+  });
+
+  $('#btnCaFilterLastMonth').addEventListener('click', () => {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0);
+    $('#caStartDate').value = formatDateISO(start);
+    $('#caEndDate').value = formatDateISO(end);
+    applyCaFiltersAndRender();
+  });
+
+  $('#btnCaFilterThisFY').addEventListener('click', () => {
+    const today = new Date();
+    let startYear = today.getFullYear();
+    // Indian FY starts April 1st. If current month is Jan/Feb/Mar, start year is last year.
+    if (today.getMonth() < 3) {
+      startYear = startYear - 1;
+    }
+    const start = new Date(startYear, 3, 1); // April 1st
+    const end = new Date(startYear + 1, 2, 31); // March 31st
+    $('#caStartDate').value = formatDateISO(start);
+    $('#caEndDate').value = formatDateISO(end);
+    applyCaFiltersAndRender();
+  });
+
+  $('#btnCaApplyFilter').addEventListener('click', () => {
+    applyCaFiltersAndRender();
+  });
+
+  $('#btnExportB2B').addEventListener('click', exportGstr1B2B);
+  $('#btnExportB2CS').addEventListener('click', exportGstr1B2CS);
+  $('#btnExportDetailed').addEventListener('click', downloadDetailedGstReport);
+}
+
+function getFilteredCaInvoices() {
+  const startStr = $('#caStartDate').value;
+  const endStr = $('#caEndDate').value;
+  
+  if (!startStr || !endStr) return caInvoices;
+  
+  const start = new Date(startStr + 'T00:00:00');
+  const end = new Date(endStr + 'T23:59:59');
+  
+  return caInvoices.filter(inv => {
+    const d = new Date(inv.invoice_date + 'T00:00:00');
+    return d >= start && d <= end;
+  });
+}
+
+function applyCaFiltersAndRender() {
+  const filtered = getFilteredCaInvoices();
+  
+  let gross = 0, taxable = 0, cgst = 0, sgst = 0, igst = 0, gstTotal = 0;
+  
+  const tbody = $('#caLedgerBody');
+  tbody.innerHTML = '';
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="page-empty-state">No invoices found for the selected date range.</td></tr>';
+    updateCaKpiCards(0, 0, 0, 0, 0, 0);
+    return;
+  }
+  
+  filtered.forEach(inv => {
+    gross += inv.grand_total || 0;
+    taxable += inv.taxable_amount || 0;
+    cgst += inv.cgst || 0;
+    sgst += inv.sgst || 0;
+    igst += inv.igst || 0;
+    
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = `
+      <td>${formatDateDisplay(inv.invoice_date)}</td>
+      <td class="mono" style="font-weight:600;">${escapeHtml(inv.invoice_number)}</td>
+      <td>${escapeHtml(inv.buyer_name || 'No customer')}</td>
+      <td class="mono">${escapeHtml(inv.buyer_gstin || '—')}</td>
+      <td><span class="badge ${inv.supply_type === 'inter' ? 'badge-buyer' : 'badge-seller'}">${inv.supply_type === 'inter' ? 'Interstate' : 'Intrastate'}</span></td>
+      <td class="text-right font-mono">₹${formatNumber(inv.taxable_amount || 0)}</td>
+      <td class="text-right font-mono" style="color:var(--text-secondary);">₹${formatNumber(inv.cgst || 0)}</td>
+      <td class="text-right font-mono" style="color:var(--text-secondary);">₹${formatNumber(inv.sgst || 0)}</td>
+      <td class="text-right font-mono" style="color:var(--text-secondary);">₹${formatNumber(inv.igst || 0)}</td>
+      <td class="text-right font-mono" style="font-weight:700; color:var(--accent-blue);">₹${formatNumber(inv.grand_total || 0)}</td>
+    `;
+    
+    // Allow viewing the preview modal on row click
+    tr.addEventListener('click', () => {
+      loadInvoiceFromHistory(inv.id, true);
+    });
+    
+    tbody.appendChild(tr);
+  });
+  
+  gstTotal = cgst + sgst + igst;
+  updateCaKpiCards(gross, taxable, cgst, sgst, igst, gstTotal);
+}
+
+function updateCaKpiCards(gross, taxable, cgst, sgst, igst, gstTotal) {
+  $('#caKpiGross').textContent = '₹' + formatNumber(gross);
+  $('#caKpiTaxable').textContent = '₹' + formatNumber(taxable);
+  $('#caKpiCgst').textContent = '₹' + formatNumber(cgst);
+  $('#caKpiSgst').textContent = '₹' + formatNumber(sgst);
+  $('#caKpiIgst').textContent = '₹' + formatNumber(igst);
+  $('#caKpiGstTotal').textContent = '₹' + formatNumber(gstTotal);
+}
+
+// ===== EXPORTS =====
+function triggerDownload(csvContent, filename) {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast(`Downloaded ${filename}`, 'success');
+}
+
+function exportGstr1B2B() {
+  const filtered = getFilteredCaInvoices().filter(inv => inv.buyer_gstin);
+  if (!filtered.length) {
+    showToast('No B2B invoices found in the selected date range.', 'error');
+    return;
+  }
+  
+  let csv = 'GSTIN of Receiver,Receiver Name,Invoice Number,Invoice Date,Invoice Value,Place Of Supply,Reverse Charge,Invoice Type,Rate,Taxable Value,CGST,SGST,IGST\n';
+  
+  filtered.forEach(inv => {
+    // Collect unique GST rates in the invoice
+    const rates = [...new Set((inv.items || []).map(item => item.gst_rate || 18))];
+    
+    // For each GST rate, report a row
+    rates.forEach(rate => {
+      let rateTaxable = 0, rateCgst = 0, rateSgst = 0, rateIgst = 0;
+      (inv.items || []).forEach(item => {
+        if ((item.gst_rate || 18) === rate) {
+          const gross = (item.qty || 1) * (item.rate || 0);
+          const disc = gross * ((item.discount_percent || 0) / 100);
+          const taxable = gross - disc;
+          rateTaxable += taxable;
+          
+          if (inv.supply_type === 'inter') {
+            rateIgst += taxable * (rate / 100);
+          } else {
+            const half = rate / 2;
+            rateCgst += taxable * (half / 100);
+            rateSgst += taxable * (half / 100);
+          }
+        }
+      });
+      
+      if (rateTaxable > 0) {
+        csv += `"${inv.buyer_gstin}","${(inv.buyer_name || '').replace(/"/g, '""')}","${inv.invoice_number}","${inv.invoice_date}",${inv.grand_total},"29-Karnataka","N","Regular",${rate},${rateTaxable.toFixed(2)},${rateCgst.toFixed(2)},${rateSgst.toFixed(2)},${rateIgst.toFixed(2)}\n`;
+      }
+    });
+  });
+  
+  const start = $('#caStartDate').value || 'start';
+  const end = $('#caEndDate').value || 'end';
+  triggerDownload(csv, `GSTR1_B2B_${start}_to_${end}.csv`);
+}
+
+function exportGstr1B2CS() {
+  const filtered = getFilteredCaInvoices().filter(inv => !inv.buyer_gstin);
+  if (!filtered.length) {
+    showToast('No B2CS invoices found in the selected date range.', 'error');
+    return;
+  }
+  
+  let csv = 'Type,Place Of Supply,Rate,Taxable Value,CGST,SGST,IGST,Total Value\n';
+  
+  // B2CS aggregates by Place Of Supply and GST Rate
+  const groups = {};
+  filtered.forEach(inv => {
+    (inv.items || []).forEach(item => {
+      const rate = item.gst_rate || 18;
+      const key = `29-Karnataka_${rate}`; // Karnataka is forced in the app
+      
+      const gross = (item.qty || 1) * (item.rate || 0);
+      const disc = gross * ((item.discount_percent || 0) / 100);
+      const taxable = gross - disc;
+      
+      let cgst = 0, sgst = 0, igst = 0;
+      if (inv.supply_type === 'inter') {
+        igst = taxable * (rate / 100);
+      } else {
+        const half = rate / 2;
+        cgst = taxable * (half / 100);
+        sgst = taxable * (half / 100);
+      }
+      
+      if (!groups[key]) {
+        groups[key] = { pos: '29-Karnataka', rate, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+      }
+      
+      groups[key].taxable += taxable;
+      groups[key].cgst += cgst;
+      groups[key].sgst += sgst;
+      groups[key].igst += igst;
+      groups[key].total += taxable + cgst + sgst + igst;
+    });
+  });
+  
+  Object.values(groups).forEach(g => {
+    csv += `OE,"${g.pos}",${g.rate},${g.taxable.toFixed(2)},${g.cgst.toFixed(2)},${g.sgst.toFixed(2)},${g.igst.toFixed(2)},${g.total.toFixed(2)}\n`;
+  });
+  
+  const start = $('#caStartDate').value || 'start';
+  const end = $('#caEndDate').value || 'end';
+  triggerDownload(csv, `GSTR1_B2CS_${start}_to_${end}.csv`);
+}
+
+function downloadDetailedGstReport() {
+  const filtered = getFilteredCaInvoices();
+  if (!filtered.length) {
+    showToast('No invoices found in the selected date range.', 'error');
+    return;
+  }
+  
+  let csv = 'Invoice Date,Invoice Number,Buyer Name,Buyer GSTIN,Supply Type,Item Description,HSN/SAC,Qty,Unit,Rate,Discount %,Taxable Value,GST Rate %,CGST,SGST,IGST,Total GST,Grand Total\n';
+  
+  filtered.forEach(inv => {
+    (inv.items || []).forEach(item => {
+      const gross = (item.qty || 1) * (item.rate || 0);
+      const disc = gross * ((item.discount_percent || 0) / 100);
+      const taxable = gross - disc;
+      const rate = item.gst_rate || 18;
+      
+      let cgst = 0, sgst = 0, igst = 0;
+      if (inv.supply_type === 'inter') {
+        igst = taxable * (rate / 100);
+      } else {
+        const half = rate / 2;
+        cgst = taxable * (half / 100);
+        sgst = taxable * (half / 100);
+      }
+      const itemGst = cgst + sgst + igst;
+      const itemTotal = taxable + itemGst;
+      
+      csv += `"${inv.invoice_date}","${inv.invoice_number}","${(inv.buyer_name || '').replace(/"/g, '""')}","${inv.buyer_gstin || ''}","${inv.supply_type}","${(item.description || '').replace(/"/g, '""')}","${item.hsn_sac || ''}",${item.qty},"${item.unit}",${item.rate},${item.discount_percent || 0},${taxable.toFixed(2)},${rate},${cgst.toFixed(2)},${sgst.toFixed(2)},${igst.toFixed(2)},${itemGst.toFixed(2)},${itemTotal.toFixed(2)}\n`;
+    });
+  });
+  
+  const start = $('#caStartDate').value || 'start';
+  const end = $('#caEndDate').value || 'end';
+  triggerDownload(csv, `Detailed_GST_Report_${start}_to_${end}.csv`);
+}
+

@@ -80,6 +80,10 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span>Users</span>
       </a>
+      <a href="#/ca-dashboard" class="sidebar-link" data-page="ca-dashboard" id="sidebarLinkCA" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        <span>CA Dashboard</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -403,6 +407,129 @@
       <div class="page-body">
         <div class="products-list" id="usersList">
           <p class="page-empty-state">Loading users...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PAGE: CA DASHBOARD ========== -->
+    <section class="page" id="pageCaDashboard">
+      <div class="page-header">
+        <h1 class="page-title">💼 CA & GST Audit Dashboard</h1>
+        <div class="page-actions">
+          <button class="btn btn-accent" id="btnExportB2B" title="Export GSTR-1 B2B CSV">Export B2B (CSV)</button>
+          <button class="btn btn-accent" id="btnExportB2CS" title="Export GSTR-1 B2CS CSV">Export B2CS (CSV)</button>
+          <button class="btn btn-primary" id="btnExportDetailed" title="Download Detailed GST Audit Sheet">Detailed Report</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <!-- Filters Card -->
+        <div class="card card-glow" style="margin-bottom: 1.5rem;">
+          <div class="card-body">
+            <div class="form-grid cols-3" style="align-items: flex-end;">
+              <div class="form-group">
+                <label for="caStartDate">Start Date</label>
+                <input type="date" id="caStartDate" />
+              </div>
+              <div class="form-group">
+                <label for="caEndDate">End Date</label>
+                <input type="date" id="caEndDate" />
+              </div>
+              <div class="form-group" style="flex-direction: row; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                <button class="btn btn-ghost btn-sm" id="btnCaFilterThisMonth">This Month</button>
+                <button class="btn btn-ghost btn-sm" id="btnCaFilterLastMonth">Last Month</button>
+                <button class="btn btn-ghost btn-sm" id="btnCaFilterThisFY">This FY</button>
+                <button class="btn btn-primary btn-sm" id="btnCaApplyFilter">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="dash-kpi-grid" style="grid-template-columns: repeat(6, 1fr); margin-bottom: 1.5rem;" id="caKpiGrid">
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-blue">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            </div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="caKpiGross">₹0</div>
+              <div class="dash-kpi-label">Gross Total</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-purple">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            </div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="caKpiTaxable">₹0</div>
+              <div class="dash-kpi-label">Taxable Value</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="caKpiCgst">₹0</div>
+              <div class="dash-kpi-label">CGST</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-orange">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="caKpiSgst">₹0</div>
+              <div class="dash-kpi-label">SGST</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-pink">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="caKpiIgst">₹0</div>
+              <div class="dash-kpi-label">IGST</div>
+            </div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-icon gradient-teal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="dash-kpi-data">
+              <div class="dash-kpi-value" id="caKpiGstTotal">₹0</div>
+              <div class="dash-kpi-label">Total GST</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ledger Card -->
+        <div class="card card-glow">
+          <div class="card-header">
+            <h2>GST Audit Ledger</h2>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div class="items-table-wrapper" style="margin: 0;">
+              <table class="items-table" style="font-size: 0.82rem;">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Invoice No</th>
+                    <th>Buyer Name</th>
+                    <th>Buyer GSTIN</th>
+                    <th>Supply Type</th>
+                    <th class="text-right">Taxable Amt (₹)</th>
+                    <th class="text-right">CGST (₹)</th>
+                    <th class="text-right">SGST (₹)</th>
+                    <th class="text-right">IGST (₹)</th>
+                    <th class="text-right">Grand Total (₹)</th>
+                  </tr>
+                </thead>
+                <tbody id="caLedgerBody">
+                  <!-- Invoices list goes here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </section>
