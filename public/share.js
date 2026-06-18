@@ -135,8 +135,9 @@ function renderInvoice(inv) {
       gstMap[rate].total += ig; 
       totalIgst += ig;
     }
+    const rowTotal = taxable + (taxable * (item.gst_rate / 100));
     const descText = escapeHtml(item.description) + (item.qty_per_unit && item.qty_per_unit > 1 ? `<br><small style="color:#64748b; font-size:0.75rem;">(Qty/Unit: ${item.qty_per_unit})</small>` : '');
-    return `<tr><td class="text-center">${i + 1}</td><td>${descText || '—'}</td><td class="text-center">${item.hsn_sac || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNum(item.rate)}</td><td class="text-center">${item.discount_percent}%</td><td class="text-center">${item.gst_rate}%</td><td class="text-right">₹${formatNum(taxable)}</td></tr>`;
+    return `<tr><td class="text-center">${i + 1}</td><td>${descText || '—'}</td><td class="text-center">${item.hsn_sac || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNum(item.rate)}</td><td class="text-center">${item.discount_percent}%</td><td class="text-center">${item.gst_rate}%</td><td class="text-right">₹${formatNum(rowTotal)}</td></tr>`;
   }).join('');
 
   const totalTax = supplyType === 'intra' ? totalCgst + totalSgst : totalIgst;

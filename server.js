@@ -388,6 +388,19 @@ app.post('/api/products', requireStaffOrAdmin, async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.put('/api/products/reorder', requireStaffOrAdmin, async (req, res) => {
+  try {
+    const { order } = req.body;
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ error: 'Order must be an array' });
+    }
+    await db.reorderProducts(order);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/products/:id', requireStaffOrAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);

@@ -494,3 +494,38 @@ select { cursor:pointer; appearance:none; background-image:url("data:image/svg+x
   }
 }
 
+/* ===== DRAG & DROP FOR PRODUCTS ===== */
+.product-item {
+  cursor: grab;
+  position: relative;
+  user-select: none;
+}
+.product-item.dragging {
+  opacity: 0.4;
+  border: 1px dashed var(--accent-blue) !important;
+  background: rgba(56, 189, 248, 0.05) !important;
+}
+.product-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 0.5rem;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+.product-drag-handle:hover {
+  color: var(--accent-blue);
+}
+.product-item.drag-over-above {
+  border-top: 2px solid var(--accent-blue);
+}
+.product-item.drag-over-below {
+  border-bottom: 2px solid var(--accent-blue);
+}
+
+.products-list.dragging-active .product-item * {
+  pointer-events: none;
+}
+

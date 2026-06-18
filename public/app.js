@@ -472,7 +472,7 @@ function renderItems() {
   items.forEach((item, index) => {
     const tr = document.createElement('tr');
     tr.dataset.id = item.id;
-    const taxableAmt = calcItemTaxable(item);
+    const rowTotal = calcItemTotal(item);
     const isCustom = !item.productId;
     let productOptions = `<option value="">— Select Product —</option>`;
     products.forEach(p => {
@@ -495,7 +495,7 @@ function renderItems() {
       <td><input type="number" value="${item.rate}" min="0" step="0.01" data-field="rate" ${item.productId ? 'readonly style="opacity:0.6"' : ''} /></td>
       <td><input type="number" value="${item.discount}" min="0" max="100" step="0.5" data-field="discount" /></td>
       <td><input type="number" value="${item.gstRate}" min="0" max="100" step="0.01" data-field="gstRate" ${item.productId ? 'readonly style="opacity:0.6"' : ''} /></td>
-      <td class="item-amount">₹${formatNumber(taxableAmt)}</td>
+      <td class="item-amount">₹${formatNumber(rowTotal)}</td>
       <td><button class="btn btn-danger btn-remove" title="Remove item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td>
     `;
     const prodSelect = tr.querySelector('[data-field="productSelect"]');
@@ -504,7 +504,7 @@ function renderItems() {
       if (el.dataset.field === 'productSelect') return;
       el.addEventListener('input', (e) => {
         updateItem(item.id, e.target.dataset.field, e.target.value);
-        const amt = calcItemTaxable(items.find(i => i.id === item.id));
+        const amt = calcItemTotal(items.find(i => i.id === item.id));
         tr.querySelector('.item-amount').textContent = `₹${formatNumber(amt)}`;
       });
     });
@@ -517,6 +517,11 @@ function renderItems() {
 function calcItemTaxable(item) {
   const gross = item.qty * item.rate;
   return gross - gross * (item.discount / 100);
+}
+
+function calcItemTotal(item) {
+  const taxable = calcItemTaxable(item);
+  return taxable + taxable * (item.gstRate / 100);
 }
 
 function recalculate() {
@@ -730,10 +735,16 @@ function renderProductsList() {
     container.innerHTML = '<p class="page-empty-state">No products yet. Add your first product!</p>';
     return;
   }
-  container.innerHTML = products.map(p => {
+  container.innerHTML = products.map((p, idx) => {
     const displayLabel = escapeHtml(p.description) + (p.qty_per_unit && p.qty_per_unit > 1 ? ` (${p.qty_per_unit})` : '');
     return `
-      <div class="product-item" data-id="${p.id}">
+      <div class="product-item" data-id="${p.id}" draggable="true" data-index="${idx}">
+        <div class="product-drag-handle" title="Drag to reorder">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/>
+            <circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/>
+          </svg>
+        </div>
         <div class="product-item-info">
           <div class="product-item-name">${displayLabel}</div>
           <div class="product-item-meta"><span>HSN: ${p.hsn_sac || '—'}</span><span>Unit: ${p.unit}</span><span>GST: ${p.gst_rate}%</span></div>
@@ -752,6 +763,79 @@ function renderProductsList() {
   container.querySelectorAll('.btn-del-prod').forEach(btn => {
     btn.addEventListener('click', () => deleteProduct(parseInt(btn.dataset.id)));
   });
+
+  // Drag and Drop Logic
+  let draggedItem = null;
+  let draggedIndex = null;
+
+  container.querySelectorAll('.product-item').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      draggedIndex = parseInt(item.dataset.index);
+      item.classList.add('dragging');
+      container.classList.add('dragging-active');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', item.dataset.id);
+    });
+
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      container.classList.remove('dragging-active');
+      container.querySelectorAll('.product-item').forEach(el => el.classList.remove('drag-over-above', 'drag-over-below'));
+    });
+
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const rect = item.getBoundingClientRect();
+      const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+      container.querySelectorAll('.product-item').forEach(el => el.classList.remove('drag-over-above', 'drag-over-below'));
+      if (next) {
+        item.classList.add('drag-over-below');
+      } else {
+        item.classList.add('drag-over-above');
+      }
+    });
+
+    item.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const targetIndex = parseInt(item.dataset.index);
+      if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+      const rect = item.getBoundingClientRect();
+      const after = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+
+      let newProducts = [...products];
+      const [moved] = newProducts.splice(draggedIndex, 1);
+      
+      let targetPos = targetIndex;
+      if (after) {
+        targetPos += 1;
+      }
+      if (draggedIndex < targetPos) {
+        targetPos -= 1;
+      }
+      newProducts.splice(targetPos, 0, moved);
+      products = newProducts;
+
+      renderProductsList();
+      await saveProductOrder();
+    });
+  });
+}
+
+async function saveProductOrder() {
+  const order = products.map((p, idx) => ({ id: p.id, sort_order: idx + 1 }));
+  try {
+    await api('/api/products/reorder', {
+      method: 'PUT',
+      body: { order }
+    });
+    renderItems(); // keep invoice generation page options sorted in the same way
+    showToast('Product order updated successfully!', 'success');
+  } catch (e) {
+    showToast('Failed to save product order: ' + e.message, 'error');
+  }
 }
 
 // ===== CUSTOMERS PAGE =====
@@ -1050,8 +1134,9 @@ function generateInvoiceHtml() {
       const ig = taxable * (rate / 100);
       gstMap[rate].igst += ig; gstMap[rate].total += ig; totalIgst += ig;
     }
+    const rowTotal = taxable + (taxable * (item.gstRate / 100));
     const descText = escapeHtml(item.description) + (item.qtyPerUnit && item.qtyPerUnit > 1 ? `<br><small style="color:#64748b; font-size:0.75rem;">(Qty/Unit: ${item.qtyPerUnit})</small>` : '');
-    return `<tr><td class="text-center">${i + 1}</td><td>${descText || '—'}</td><td class="text-center">${item.hsn || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNumber(item.rate)}</td><td class="text-center">${item.discount}%</td><td class="text-center">${item.gstRate}%</td><td class="text-right">₹${formatNumber(taxable)}</td></tr>`;
+    return `<tr><td class="text-center">${i + 1}</td><td>${descText || '—'}</td><td class="text-center">${item.hsn || '—'}</td><td class="text-center">${item.qty}</td><td class="text-center">${item.unit}</td><td class="text-right">₹${formatNumber(item.rate)}</td><td class="text-center">${item.discount}%</td><td class="text-center">${item.gstRate}%</td><td class="text-right">₹${formatNumber(rowTotal)}</td></tr>`;
   }).join('');
   const totalTax = supplyType === 'intra' ? totalCgst + totalSgst : totalIgst;
   const grandTotal = taxableTotal + totalTax;
