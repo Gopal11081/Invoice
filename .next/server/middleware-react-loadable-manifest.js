@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"app\\\\(dashboard)\\\\invoice\\\\page.js -> html2pdf.js":{"id":1690,"files":["static/chunks/b645e135.646b800dd5397c75.js","static/chunks/ad2866b8.a1343deb0eef8820.js","static/chunks/257.ea02243c08a5e1c8.js"]}}';
