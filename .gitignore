@@ -3,6 +3,11 @@ node_modules/
 jspm_packages/
 web_modules/
 
+# Next.js build output
+.next/
+out/
+
+
 # SQLite databases and WAL files
 *.db
 *.db-journal
