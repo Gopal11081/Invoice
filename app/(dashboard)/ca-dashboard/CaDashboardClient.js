@@ -139,14 +139,15 @@ export default function CaDashboardClient() {
           if ((item.gst_rate || 18) === rate) {
             const gross = (item.qty || 1) * (item.rate || 0);
             const disc = gross * ((item.discount_percent || 0) / 100);
-            const taxable = gross - disc;
+            const rowTotal = gross - disc;
+            const taxable = rowTotal / (1 + (rate / 100));
+            const rowTax = rowTotal - taxable;
             rateTaxable += taxable;
             if (inv.supply_type === 'inter') {
-              rateIgst += taxable * (rate / 100);
+              rateIgst += rowTax;
             } else {
-              const half = rate / 2;
-              rateCgst += taxable * (half / 100);
-              rateSgst += taxable * (half / 100);
+              rateCgst += rowTax / 2;
+              rateSgst += rowTax / 2;
             }
           }
         });
@@ -174,14 +175,15 @@ export default function CaDashboardClient() {
         const key = `29-Karnataka_${rate}`;
         const gross = (item.qty || 1) * (item.rate || 0);
         const disc = gross * ((item.discount_percent || 0) / 100);
-        const taxable = gross - disc;
+        const rowTotal = gross - disc;
+        const taxable = rowTotal / (1 + (rate / 100));
+        const rowTax = rowTotal - taxable;
         let cgst = 0, sgst = 0, igst = 0;
         if (inv.supply_type === 'inter') {
-          igst = taxable * (rate / 100);
+          igst = rowTax;
         } else {
-          const half = rate / 2;
-          cgst = taxable * (half / 100);
-          sgst = taxable * (half / 100);
+          cgst = rowTax / 2;
+          sgst = rowTax / 2;
         }
         if (!groups[key]) {
           groups[key] = { pos: '29-Karnataka', rate, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
@@ -212,15 +214,16 @@ export default function CaDashboardClient() {
       (inv.items || []).forEach((item) => {
         const gross = (item.qty || 1) * (item.rate || 0);
         const disc = gross * ((item.discount_percent || 0) / 100);
-        const taxable = gross - disc;
+        const rowTotal = gross - disc;
         const rate = item.gst_rate || 18;
+        const taxable = rowTotal / (1 + (rate / 100));
+        const rowTax = rowTotal - taxable;
         let cgst = 0, sgst = 0, igst = 0;
         if (inv.supply_type === 'inter') {
-          igst = taxable * (rate / 100);
+          igst = rowTax;
         } else {
-          const half = rate / 2;
-          cgst = taxable * (half / 100);
-          sgst = taxable * (half / 100);
+          cgst = rowTax / 2;
+          sgst = rowTax / 2;
         }
         const itemGst = cgst + sgst + igst;
         const itemTotal = taxable + itemGst;

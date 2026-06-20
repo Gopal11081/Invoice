@@ -117,7 +117,10 @@ export default function ShareInvoicePage({ params }) {
   items.forEach((item) => {
     const gross = (item.qty || 1) * (item.rate || 0);
     const discAmt = gross * ((item.discount_percent || 0) / 100);
-    const taxable = gross - discAmt;
+    const rowTotal = gross - discAmt;
+    const taxable = rowTotal / (1 + (item.gst_rate || 18) / 100);
+    const rowTax = rowTotal - taxable;
+
     subtotal += gross;
     totalDiscount += discAmt;
     taxableTotal += taxable;
@@ -127,17 +130,17 @@ export default function ShareInvoicePage({ params }) {
     gstMap[rate].taxable += taxable;
 
     if (supplyType === 'intra') {
-      const c = taxable * ((rate / 2) / 100);
+      const c = rowTax / 2;
       const s = c;
       gstMap[rate].cgst += c;
       gstMap[rate].sgst += s;
-      gstMap[rate].total += c + s;
+      gstMap[rate].total += rowTax;
       totalCgst += c;
       totalSgst += s;
     } else {
-      const ig = taxable * (rate / 100);
+      const ig = rowTax;
       gstMap[rate].igst += ig;
-      gstMap[rate].total += ig;
+      gstMap[rate].total += rowTax;
       totalIgst += ig;
     }
   });
@@ -244,8 +247,7 @@ export default function ShareInvoicePage({ params }) {
                 {items.map((item, idx) => {
                   const gross = (item.qty || 1) * (item.rate || 0);
                   const discAmt = gross * ((item.discount_percent || 0) / 100);
-                  const taxable = gross - discAmt;
-                  const rowTotal = taxable + (taxable * ((item.gst_rate || 18) / 100));
+                  const rowTotal = gross - discAmt;
 
                   return (
                     <tr key={idx}>

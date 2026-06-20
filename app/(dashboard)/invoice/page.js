@@ -229,14 +229,14 @@ function InvoiceForm() {
     );
   };
 
-  const calcItemTaxable = (item) => {
-    const gross = item.qty * item.rate;
-    return gross - gross * (item.discount / 100);
+  const calcItemTotal = (item) => {
+    const grossInclusive = item.qty * item.rate;
+    return grossInclusive - grossInclusive * (item.discount / 100);
   };
 
-  const calcItemTotal = (item) => {
-    const taxable = calcItemTaxable(item);
-    return taxable + taxable * (item.gstRate / 100);
+  const calcItemTaxable = (item) => {
+    const totalInclusive = calcItemTotal(item);
+    return totalInclusive / (1 + (item.gstRate / 100));
   };
 
   // Real-time invoice aggregation calculation
@@ -250,12 +250,15 @@ function InvoiceForm() {
     const gstBreakdown = {};
 
     items.forEach((item) => {
-      const gross = item.qty * item.rate;
-      const discountAmt = gross * (item.discount / 100);
-      const taxable = gross - discountAmt;
+      const grossInclusive = item.qty * item.rate;
+      const discountAmtInclusive = grossInclusive * (item.discount / 100);
+      const totalInclusive = grossInclusive - discountAmtInclusive;
 
-      subtotal += gross;
-      totalDiscount += discountAmt;
+      const taxable = totalInclusive / (1 + (item.gstRate / 100));
+      const taxAmount = totalInclusive - taxable;
+
+      subtotal += grossInclusive;
+      totalDiscount += discountAmtInclusive;
       taxableTotal += taxable;
 
       const rate = item.gstRate;
@@ -265,18 +268,17 @@ function InvoiceForm() {
       gstBreakdown[rate].taxable += taxable;
 
       if (supplyType === 'intra') {
-        const half = rate / 2;
-        const cgst = taxable * (half / 100);
-        const sgst = taxable * (half / 100);
+        const cgst = taxAmount / 2;
+        const sgst = taxAmount / 2;
         gstBreakdown[rate].cgst += cgst;
         gstBreakdown[rate].sgst += sgst;
-        gstBreakdown[rate].totalTax += cgst + sgst;
+        gstBreakdown[rate].totalTax += taxAmount;
         totalCgst += cgst;
         totalSgst += sgst;
       } else {
-        const igst = taxable * (rate / 100);
+        const igst = taxAmount;
         gstBreakdown[rate].igst += igst;
-        gstBreakdown[rate].totalTax += igst;
+        gstBreakdown[rate].totalTax += taxAmount;
         totalIgst += igst;
       }
     });
@@ -1098,8 +1100,7 @@ function InvoiceForm() {
                     {items.map((item, idx) => {
                       const gross = item.qty * item.rate;
                       const discAmt = gross * (item.discount / 100);
-                      const taxable = gross - discAmt;
-                      const rowTotal = taxable + (taxable * (item.gstRate / 100));
+                      const rowTotal = gross - discAmt;
 
                       return (
                         <tr key={item.id}>
