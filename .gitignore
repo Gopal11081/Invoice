@@ -16,6 +16,7 @@ out/
 *.sqlite
 *.sqlite3
 
+
 # Firebase local files
 .firebase/
 firebase-debug.log
