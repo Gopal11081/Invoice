@@ -6,22 +6,23 @@ import { formatNumber } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { logClientError } from '@/lib/logError';
 
-const getEmailBadge = (status) => {
-  switch (status) {
-    case 'sending':
-      return <span className="badge badge-email-sending" style={{ marginLeft: '0.5rem' }}>✉️ Sending</span>;
-    case 'sent':
-      return <span className="badge badge-email-sent" style={{ marginLeft: '0.5rem' }}>✉️ Emailed</span>;
-    case 'failed':
-      return <span className="badge badge-email-failed" style={{ marginLeft: '0.5rem' }}>✉️ Failed</span>;
-    case 'not_configured':
-      return <span className="badge badge-email-not_configured" style={{ marginLeft: '0.5rem' }} title="SMTP not configured. Link logged to server console.">✉️ Logged</span>;
-    case 'disabled':
-      return <span className="badge badge-email-disabled" style={{ marginLeft: '0.5rem' }} title="Automatic email sending is turned off in settings.">✉️ Disabled</span>;
-    default:
-      return null;
-  }
-};
+// Email badge display disabled
+// const getEmailBadge = (status) => {
+//   switch (status) {
+//     case 'sending':
+//       return <span className="badge badge-email-sending" style={{ marginLeft: '0.5rem' }}>✉️ Sending</span>;
+//     case 'sent':
+//       return <span className="badge badge-email-sent" style={{ marginLeft: '0.5rem' }}>✉️ Emailed</span>;
+//     case 'failed':
+//       return <span className="badge badge-email-failed" style={{ marginLeft: '0.5rem' }}>✉️ Failed</span>;
+//     case 'not_configured':
+//       return <span className="badge badge-email-not_configured" style={{ marginLeft: '0.5rem' }} title="SMTP not configured. Link logged to server console.">✉️ Logged</span>;
+//     case 'disabled':
+//       return <span className="badge badge-email-disabled" style={{ marginLeft: '0.5rem' }} title="Automatic email sending is turned off in settings.">✉️ Disabled</span>;
+//     default:
+//       return null;
+//   }
+// };
 
 export default function DashboardPage() {
   const [data, setData] = useState(null);
@@ -203,9 +204,11 @@ export default function DashboardPage() {
           <div className="dash-kpi-grid" id="dashKpiGrid">
             <div className="dash-kpi">
               <div className="dash-kpi-icon gradient-blue">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="1" x2="12" y2="23" />
-                  <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 3h12" />
+                  <path d="M6 8h12" />
+                  <path d="M6 13h8.5a4.5 4.5 0 0 0 0-9H6" />
+                  <path d="M6 13h3l9 9" />
                 </svg>
               </div>
               <div className="dash-kpi-data">
@@ -409,7 +412,7 @@ export default function DashboardPage() {
                       <tr key={idx}>
                         <td className="mono" style={{ fontWeight: 600, display: 'flex', alignItems: 'center' }}>
                           {inv.invoice_number}
-                          {getEmailBadge(inv.email_status)}
+                          {/* Email badge disabled */}
                         </td>
                         <td>{new Date(inv.invoice_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                         <td>{inv.buyer_name || 'Cash Customer'}</td>

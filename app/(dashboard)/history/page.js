@@ -7,22 +7,23 @@ import { toast } from '@/lib/toast';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { logClientError } from '@/lib/logError';
 
-const getEmailBadge = (status) => {
-  switch (status) {
-    case 'sending':
-      return <span className="badge badge-email-sending" style={{ marginLeft: '0.75rem' }}>✉️ Sending</span>;
-    case 'sent':
-      return <span className="badge badge-email-sent" style={{ marginLeft: '0.75rem' }}>✉️ Emailed</span>;
-    case 'failed':
-      return <span className="badge badge-email-failed" style={{ marginLeft: '0.75rem' }}>✉️ Failed</span>;
-    case 'not_configured':
-      return <span className="badge badge-email-not_configured" style={{ marginLeft: '0.75rem' }} title="SMTP not configured. Link logged to server console.">✉️ Logged</span>;
-    case 'disabled':
-      return <span className="badge badge-email-disabled" style={{ marginLeft: '0.75rem' }} title="Automatic email sending is turned off in settings.">✉️ Disabled</span>;
-    default:
-      return null;
-  }
-};
+// Email badge display disabled
+// const getEmailBadge = (status) => {
+//   switch (status) {
+//     case 'sending':
+//       return <span className="badge badge-email-sending" style={{ marginLeft: '0.75rem' }}>✉️ Sending</span>;
+//     case 'sent':
+//       return <span className="badge badge-email-sent" style={{ marginLeft: '0.75rem' }}>✉️ Emailed</span>;
+//     case 'failed':
+//       return <span className="badge badge-email-failed" style={{ marginLeft: '0.75rem' }}>✉️ Failed</span>;
+//     case 'not_configured':
+//       return <span className="badge badge-email-not_configured" style={{ marginLeft: '0.75rem' }} title="SMTP not configured. Link logged to server console.">✉️ Logged</span>;
+//     case 'disabled':
+//       return <span className="badge badge-email-disabled" style={{ marginLeft: '0.75rem' }} title="Automatic email sending is turned off in settings.">✉️ Disabled</span>;
+//     default:
+//       return null;
+//   }
+// };
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -187,7 +188,7 @@ export default function HistoryPage() {
                   <div className="history-item-info">
                     <div className="history-item-number" style={{ display: 'flex', alignItems: 'center' }}>
                       {inv.invoice_number}
-                      {getEmailBadge(inv.email_status)}
+                      {/* Email badge disabled */}
                     </div>
                     <div className="history-item-detail">
                       {inv.buyer_name || 'No customer'} · {formatDateDisplay(inv.invoice_date)}

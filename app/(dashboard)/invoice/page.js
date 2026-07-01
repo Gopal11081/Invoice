@@ -407,16 +407,16 @@ function InvoiceForm() {
 
       const result = await res.json();
 
-      // Trigger the background email sending in a non-blocking client-side call only if enabled in business settings
-      if (sellerConfig?.send_emails !== false) {
-        fetch('/api/invoices/email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: result.id, isUpdate: !!result.updated })
-        }).catch((e) => {
-          console.error("Failed to trigger background invoice email:", e);
-        });
-      }
+      // Auto email sending disabled — uncomment below to re-enable
+      // if (sellerConfig?.send_emails !== false) {
+      //   fetch('/api/invoices/email', {
+      //     method: 'POST',
+      //     headers: { 'Content-Type': 'application/json' },
+      //     body: JSON.stringify({ id: result.id, isUpdate: !!result.updated })
+      //   }).catch((e) => {
+      //     console.error("Failed to trigger background invoice email:", e);
+      //   });
+      // }
 
       if (!quiet) {
         toast.success(result.updated ? 'Invoice updated successfully!' : 'Invoice saved successfully!');
@@ -890,9 +890,11 @@ function InvoiceForm() {
                 <section className="card card-glow summary-card" id="sectionSummary">
                   <div className="card-header">
                     <div className="card-icon gradient-pink">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <line x1="12" y1="1" x2="12" y2="23" />
-                        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 3h12" />
+                        <path d="M6 8h12" />
+                        <path d="M6 13h8.5a4.5 4.5 0 0 0 0-9H6" />
+                        <path d="M6 13h3l9 9" />
                       </svg>
                     </div>
                     <h2>Invoice Summary</h2>
