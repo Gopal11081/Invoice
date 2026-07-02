@@ -74,7 +74,8 @@ export default function HistoryPage() {
       setTotalCount(data.totalCount);
       
       if (data.list.length === itemsPerPage) {
-        const nextCursor = data.list[data.list.length - 1].created_at;
+        const lastItem = data.list[data.list.length - 1];
+        const nextCursor = `${lastItem.invoice_date}_${lastItem.created_at}`;
         setPageCursors(prev => {
           const nextCursors = [...prev];
           nextCursors[page] = nextCursor;

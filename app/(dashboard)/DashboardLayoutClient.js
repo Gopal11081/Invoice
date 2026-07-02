@@ -11,6 +11,14 @@ export default function DashboardLayoutClient({ children, currentUser }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isCARestricted = currentUser?.role === 'ca' && pathname !== '/ca-dashboard';
+
+  useEffect(() => {
+    if (isCARestricted) {
+      router.replace('/ca-dashboard');
+    }
+  }, [isCARestricted, router]);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -129,7 +137,7 @@ export default function DashboardLayoutClient({ children, currentUser }) {
     }
   };
 
-  const links = [
+  const links = currentUser?.role === 'ca' ? [] : [
     { name: 'Dashboard', path: '/dashboard', icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
     )},
@@ -274,7 +282,13 @@ export default function DashboardLayoutClient({ children, currentUser }) {
 
       {/* ===== MAIN CONTENT WRAPPER ===== */}
       <div className="app-content" id="appContent">
-        {children}
+        {isCARestricted ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+            Redirecting to CA Dashboard...
+          </div>
+        ) : (
+          children
+        )}
       </div>
 
       {isProfileOpen && (

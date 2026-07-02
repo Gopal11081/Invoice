@@ -5,7 +5,7 @@ import { withErrorHandler, validateBody } from '@/lib/server/apiHandler';
 import { CustomerSchema } from '@/lib/server/schemas';
 
 export const GET = withErrorHandler('app/api/customers/[id]/route.js (GET)', async (request, { params }) => {
-  const auth = await verifyAuth();
+  const auth = await verifyAuth(['admin', 'staff']);
   if (auth.error) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
